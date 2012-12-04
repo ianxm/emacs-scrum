@@ -128,12 +128,12 @@
 
 #+END_SRC
 
-* updating generated content
+** updating generated content
 
-  generated content can be updated by running 'M-x scrum-update'
+   generated content can be updated by running 'M-x scrum-update'
 
-  alternatively, individual blocks can be updated by doing a 'C-c
-  C-c' with the point on a dynamic block "#+BEGIN" line.
+   alternatively, individual blocks can be updated by doing a 'C-c
+   C-c' with the point on a dynamic block "#+BEGIN" line.
 
 * bugs
 
