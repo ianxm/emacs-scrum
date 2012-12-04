@@ -1,0 +1,113 @@
+#+TITLE: Example 
+#+AUTHOR: ian
+#+EMAIL: ianxm@jhu.edu
+#+TODO: TODO STARTED | DONE DEFERRED
+#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+}
+
+* TASKS 
+  :PROPERTIES:
+  :ID:       TASKS
+  :SPRINTLENGTH: 30
+  :SPRINTSTART: <2012-11-25 Sun>
+  :wpd-devname1:      3
+  :wpd-devname2:    4
+  :END:
+** CATEGORY
+*** TODO [#A] name of task1
+    :PROPERTIES:
+    :ESTIMATED: 4
+    :ACTUAL:   1
+    :OWNER:    devname1
+    :TASKID:   S1.01
+    :END:
+    description of task1
+*** TODO [#B] name of task2
+    :PROPERTIES:
+    :ESTIMATED: 4
+    :ACTUAL: 
+    :OWNER:    devname2
+    :TASKID:   S1.02
+    :END:
+    description of task2
+* REPORTS
+** SUMMARY
+#+BEGIN: block-update-summary
+| NAME     | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
+|----------+-----------+--------+------+-----------+--------------+------------|
+| devname1 |         4 |      1 |    0 |         4 |   2012-12-05 | ---------- |
+| devname2 |         4 |      0 |    0 |         4 |   2012-12-04 | ---------- |
+#+END:
+** BURNDOWN CHART
+#+BEGIN: block-update-graph
+'
+'                                   Burndown
+'
+'  8 +-...###############----+-----------+----------+-----------+-----------+
+'    |                                                         IDEAL ...... |
+'  7 +    ........                                            ACTUAL ###### +
+'    |            .                                                         |
+'  6 +             ........                                                 +
+'    |                     .                                                |
+'    |                      .                                               |
+'  5 +                       ........                                       +
+'    |                               .                                      |
+'  4 +                                ......                                +
+'    |                                      .                               |
+'  3 +                                       ..........                     +
+'    |                                                                      |
+'  2 +                                                 ........             +
+'    |                                                         .            |
+'    |                                                         .            |
+'  1 +                                                          ..........  +
+'    |                                                                      |
+'  0 +-----------+-----------+-----------+----------+-----------+---------...
+'    0           5           10          15         20          25          30
+'
+'
+#+END:
+** BURNDOWN LIST
+#+PLOT: title:"Burndown" ind:1 deps:(3 4) set:"term dumb" set:"xtics scale 0.5" set:"ytics scale 0.5" file:"burndown.plt"
+#+BEGIN: block-update-burndown
+| DAY |       DATE | IDEAL | ACTUAL | TASKS COMPLETED |
+|-----+------------+-------+--------+-----------------|
+|   1 | 2012-11-26 |     8 |      8 |                 |
+|   2 | 2012-11-27 |     7 |      8 |                 |
+|   3 | 2012-11-28 |     7 |      8 |                 |
+|   4 | 2012-11-29 |     7 |      8 |                 |
+|   5 | 2012-11-30 |     7 |      8 |                 |
+|   6 | 2012-12-01 |     6 |      8 |                 |
+|   7 | 2012-12-02 |     6 |      8 |                 |
+|   8 | 2012-12-03 |     6 |      8 |                 |
+|   9 | 2012-12-04 |     6 |        |                 |
+|  10 | 2012-12-05 |     5 |        |                 |
+|  11 | 2012-12-06 |     5 |        |                 |
+|  12 | 2012-12-07 |     5 |        |                 |
+|  13 | 2012-12-08 |     5 |        |                 |
+|  14 | 2012-12-09 |     4 |        |                 |
+|  15 | 2012-12-10 |     4 |        |                 |
+|  16 | 2012-12-11 |     4 |        |                 |
+|  17 | 2012-12-12 |     3 |        |                 |
+|  18 | 2012-12-13 |     3 |        |                 |
+|  19 | 2012-12-14 |     3 |        |                 |
+|  20 | 2012-12-15 |     3 |        |                 |
+|  21 | 2012-12-16 |     2 |        |                 |
+|  22 | 2012-12-17 |     2 |        |                 |
+|  23 | 2012-12-18 |     2 |        |                 |
+|  24 | 2012-12-19 |     2 |        |                 |
+|  25 | 2012-12-20 |     1 |        |                 |
+|  26 | 2012-12-21 |     1 |        |                 |
+|  27 | 2012-12-22 |     1 |        |                 |
+|  28 | 2012-12-23 |     1 |        |                 |
+|  29 | 2012-12-24 |     0 |        |                 |
+|  30 | 2012-12-25 |     0 |        |                 |
+#+END:
+** TASK LIST 
+#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS"
+| ITEM              | TASKID | OWNER    | PRIORITY | TODO | ESTIMATED | ACTUAL |
+|-------------------+--------+----------+----------+------+-----------+--------|
+| * TASKS           |        |          |          |      |         8 |      1 |
+|-------------------+--------+----------+----------+------+-----------+--------|
+| ** CATEGORY       |        |          |          |      |         8 |      1 |
+| *** name of task1 | S1.01  | devname1 | A        | TODO |         4 |      1 |
+| *** name of task2 | S1.02  | devname2 | B        | TODO |         4 |        |
+#+END:
