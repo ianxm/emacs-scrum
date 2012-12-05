@@ -191,6 +191,20 @@
           (while (re-search-forward "\*" nil t)
             (replace-match "\.")))))))
 
+(defun scrum-reset-taskids ()
+  "replace taskids of all todos in the tasks tree with consecutive values"
+  (interactive)
+  (save-excursion
+    (let ((ii 0)
+          tasks)
+      (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
+      (goto-char tasks)
+      (org-map-entries (lambda ()
+                         (org-entry-put (point) "TASKID" (format "T%02d" ii))
+                         (setq ii (1+ ii)))
+                       "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree))))
+
+
 (defun scrum-update ()
   "update dynamic blocks in a scrum org file"
   (interactive)
