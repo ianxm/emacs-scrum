@@ -87,6 +87,49 @@
      (apply 'concat (make-list blocksdone "#"))
      (apply 'concat (make-list (- width blocksdone) "-")))))
 
+(defun visit-all-task-todos (fcn)
+    (let (tasks)
+      (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
+      (goto-char tasks)
+      ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
+      (org-map-entries fcn "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree)))
+
+(defun add-task-to-board (name row col nrows)
+  
+)
+
+(defun org-dblock-write:block-update-board (params)
+  (interactive)
+  "generate scrum board"
+  (let ((todos)                 ;; list of (link . colstr)
+        (ntodo 0)               ;; number of todos found
+        (nstarted 0)            ;; number of started found
+        (ndone 0)               ;; number of done found
+        colstr topleft)
+    (insert "| TODO | STARTED | DONE |\n|-")
+    (setq topleft (point))
+    (setq todos (visit-all-task-todos (lambda ()
+                                        (let ((todo (org-entry-get (point) "TODO")))
+                                          (setq colstr (cond
+                                                        ((string= todo "TODO") (progn (setq ntodo (1+ ntodo))) "| |")
+                                                        ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
+                                                        ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
+                                          (cons
+                                           (org-make-link-string (org-make-org-heading-search-string)
+                                                                 (concat (org-entry-get (point) "TASKID") " " (nth 4 (org-heading-components))))
+                                           colstr)))))
+    (goto-char topleft)
+    (dotimes (ii (max (max ntodo nstarted) ndone))
+      (insert "\n| |  |   |"))          ;; different number of spaces for each col
+
+    (dolist (item todos)
+      (goto-char topleft)
+      (search-forward (cdr item))       ;; find col based on number of spaces
+      (forward-char -1)
+      (insert (car item)))
+  (goto-char topleft)
+  (org-ctrl-c-ctrl-c)))
+
 (defun org-dblock-write:block-update-summary (params)
   "generate scrum summary table"
   (let ((developers nil)
@@ -195,15 +238,10 @@
   "replace taskids of all todos in the tasks tree with consecutive values"
   (interactive)
   (save-excursion
-    (let ((ii 0)
-          tasks)
-      (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
-      (goto-char tasks)
-      (org-map-entries (lambda ()
-                         (org-entry-put (point) "TASKID" (format "T%02d" ii))
-                         (setq ii (1+ ii)))
-                       "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree))))
-
+    (let ((ii 1))
+      (visit-all-task-todos (lambda ()
+                              (org-entry-put (point) "TASKID" (format "T%02d" ii))
+                              (setq ii (1+ ii)))))))
 
 (defun scrum-update ()
   "update dynamic blocks in a scrum org file"
@@ -219,6 +257,11 @@
       (setq found (re-search-forward "#\\+BEGIN: block-update-summary" nil t))
       (if (not found)
           (error "block-update-summary not found"))
+      (org-ctrl-c-ctrl-c)
+      (goto-char (point-min))
+      (setq found (re-search-forward "#\\+BEGIN: block-update-board" nil t))
+      (if (not found)
+          (error "block-update-board not found"))
       (org-ctrl-c-ctrl-c)
       (goto-char (point-min))
       (setq found (re-search-forward "#\\+BEGIN: block-update-burndown" nil t))
