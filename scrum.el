@@ -105,10 +105,6 @@
       ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
       (org-map-entries fcn "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree)))
 
-(defun add-task-to-board (name row col nrows)
-  
-)
-
 (defun org-dblock-write:block-update-board (params)
   (interactive)
   "generate scrum board"
@@ -120,14 +116,21 @@
     (insert "| TODO | STARTED | DONE |\n|-")
     (setq topleft (point))
     (setq todos (visit-all-task-todos (lambda ()
-                                        (let ((todo (org-entry-get (point) "TODO")))
+                                        (let* ((todo (org-entry-get (point) "TODO"))
+                                               (heading (nth 4 (org-heading-components)))
+                                               (hdgbracket (string-match "\\[" heading))
+                                               (maxlen 30))
+                                          (if hdgbracket
+                                              (setq heading (substring heading 0 (1- hdgbracket))))
                                           (setq colstr (cond
                                                         ((string= todo "TODO") (progn (setq ntodo (1+ ntodo))) "| |")
                                                         ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
                                                         ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
                                           (cons
                                            (org-make-link-string (org-make-org-heading-search-string)
-                                                                 (concat (org-entry-get (point) "TASKID") ". " (nth 4 (org-heading-components))))
+                                                                 (concat (org-entry-get (point) "TASKID")
+                                                                         ". "
+                                                                         (substring heading 0 (min (length heading) maxlen))))
                                            colstr)))))
     (goto-char topleft)
     (dotimes (ii (max (max ntodo nstarted) ndone))
