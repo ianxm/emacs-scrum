@@ -127,10 +127,14 @@
                                                         ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
                                                         ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
                                           (cons
-                                           (org-make-link-string (org-make-org-heading-search-string)
-                                                                 (concat (org-entry-get (point) "TASKID")
-                                                                         ". "
-                                                                         (substring heading 0 (min (length heading) maxlen))))
+                                           (concat (org-entry-get (point) "TASKID")
+                                                   ". "
+                                                   (substring heading 0 (min (length heading) maxlen)))
+                                           ;; removed links because they cluttered ascii export
+                                           ;; (org-make-link-string (org-make-org-heading-search-string)
+                                           ;;                       (concat (org-entry-get (point) "TASKID")
+                                           ;;                               ". "
+                                           ;;                               (substring heading 0 (min (length heading) maxlen))))
                                            colstr)))))
     (goto-char topleft)
     (dotimes (ii (max (max ntodo nstarted) ndone))
@@ -173,7 +177,7 @@
 
 (defun org-dblock-write:block-update-burndown (params)
   "generate burndown table"
-  (insert "| DAY | DATE | IDEAL | ACTUAL | TASKS COMPLETED |\n|-")
+  (insert "| DAY | DATE | ACTUAL | IDEAL | TASKS COMPLETED |\n|-")
   (let ((day 1)               ;; day index
         (today (current-time))
         tot                   ;; total hours of estimates
@@ -205,7 +209,6 @@
       (setq toremove nil)
       (insert "\n| " (number-to-string day)
               " | " (format-time-string "%Y-%m-%d" cdate)
-              " | " (number-to-string (round (- totleft (* totleft (/ day (* 1.0 sprintlength))))))
               " | " (if (time-less-p cdate today)
                       (let ((ret (get-work-left cdate closed tot)))
                         (setq toremove (car ret))                   ;; save list of completed tasks
@@ -215,6 +218,7 @@
                               (setq closed (delq item closed))))
                         (number-to-string tot))
                       "")
+              " | " (number-to-string (round (- totleft (* totleft (/ day (* 1.0 sprintlength))))))
               " | " (mapconcat (function (lambda (ii) (nth 2 ii))) toremove " ")
               " | " )
       (setq day (1+ day)))
@@ -234,19 +238,24 @@
       (when (file-exists-p fname)
         (goto-char (point-min))
         (re-search-forward "#\\+BEGIN: .*block-update-graph")   ;; must exist
-        (forward-line 1)              ;; move into dynamic block
+        (forward-line 1)                            ;; move into dynamic block
         (setq pt (point))
         (insert-file-contents fname)
-        (delete-file fname)           ;; del temp file
-        (delete-char 1)               ;; form feed
+        (delete-file fname)                         ;; del temp file
+        (delete-char 1)                             ;; form feed
         (while (not (looking-at "#\\+END"))
           (insert "'")
           (forward-line 1))
-        (save-restriction
+        (save-restriction                           ;; change ideal to .
+          (narrow-to-region pt (point))
+          (goto-char pt)
+          (while (re-search-forward "#" nil t)
+            (replace-match "\.")))
+        (save-restriction                           ;; change actual to #
           (narrow-to-region pt (point))
           (goto-char pt)
           (while (re-search-forward "\*" nil t)
-            (replace-match "\.")))))))
+            (replace-match "#")))))))
 
 (defun scrum-reset-taskids ()
   "replace taskids of all todos in the tasks tree with consecutive values"

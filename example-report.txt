@@ -2,13 +2,14 @@
                      ============================
 
 Author: ian <ianxm@jhu.edu>
-Date: 2012-12-03 22:02:18 EST
+Date: 2012-12-05 23:59:22 EST
+
 
 
 Table of Contents
 =================
 1 TASKS 
-    1.1 RESEARCH 
+    1.1 Research 
         1.1.1 learn elisp 
         1.1.2 learn org mode 
     1.2 ENVIRONMENT 
@@ -17,25 +18,29 @@ Table of Contents
     1.3 DESIGN 
         1.3.1 draw up reports ui's 
     1.4 CODING 
-        1.4.1 create task list table 
+        1.4.1 create task list table [2/2] 
         1.4.2 create summary table 
         1.4.3 create burndown list 
         1.4.4 create burndown chart 
+        1.4.5 create scrum board 
     1.5 PUBLISH 
         1.5.1 add license to src files 
         1.5.2 write doc 
         1.5.3 post to github [0/2] 
-2 REPORTS 
-    2.1 SUMMARY 
-    2.2 BURNDOWN CHART 
-    2.3 BURNDOWN LIST 
-    2.4 TASK LIST 
+2 BACKLOG 
+    2.1 links in scrum board 
+3 REPORTS 
+    3.1 SCRUM BOARD 
+    3.2 SUMMARY 
+    3.3 BURNDOWN CHART 
+    3.4 BURNDOWN LIST 
+    3.5 TASK LIST 
 
 
 1 TASKS 
 ~~~~~~~~
 
-1.1 RESEARCH 
+1.1 Research 
 =============
 
 1.1.1 DONE learn elisp 
@@ -59,7 +64,7 @@ Table of Contents
 
 1.2.1 DONE set up project folder [3/3] 
 ---------------------------------------
-    CLOSED: [2012-11-26 Mon 18:22]
+    CLOSED: [2012-11-28 Wed 20:58]
     - [X] init git repo
     - [X] set up remote backups
 
@@ -79,16 +84,14 @@ Table of Contents
 1.4 CODING 
 ===========
 
-1.4.1 DONE create task list table 
-----------------------------------
+1.4.1 DONE create task list table [2/2] 
+----------------------------------------
     CLOSED: [2012-12-01 Sat 09:48]
     task list should list the tasks in the org tree as a table.  it
     should have columns for the task id, owner, and show estimates and
     actuals.
-* DONE compute and draw progress bars 
-  CLOSED: [2012-11-27 Tue 21:33]
-* DONE compute 'pencils down' date 
-  CLOSED: [2012-11-28 Wed 21:33]
+    - [X] compute and draw progress bars
+    - [X] compute 'pencils down' date
 
 1.4.2 DONE create summary table 
 --------------------------------
@@ -103,8 +106,15 @@ Table of Contents
 
 1.4.4 DONE create burndown chart 
 ---------------------------------
-    CLOSED: [2012-12-01 Sat 16:48]
+    CLOSED: [2012-12-02 Sun 16:48]
     generate an ascii burndown chart via gnuplot.
+
+1.4.5 DONE create scrum board 
+------------------------------
+    CLOSED: [2012-12-05 Wed 23:10]
+    create a table with a column for each TODO status.  fill it with
+    the tasks, where each task in the table links to that task in the
+    outline.
 
 1.5 PUBLISH 
 ============
@@ -121,88 +131,109 @@ Table of Contents
     - [ ] create a project
     - [ ] push repo
 
-2 REPORTS 
+2 BACKLOG 
 ~~~~~~~~~~
 
-2.1 SUMMARY 
+2.1 TODO links in scrum board 
+==============================
+
+3 REPORTS 
+~~~~~~~~~~
+
+3.1 SCRUM BOARD 
+================
+  TODO                              STARTED            DONE                           
+ ---------------------------------+------------------+-------------------------------
+  S1-11. add license to src files   S1-12. write doc   S1-01. learn elisp             
+  S1-13. post to github                                S1-02. learn org mode          
+                                                       S1-03. set up project folder   
+                                                       S1-04. write example org file  
+                                                       S1-05. draw up reports ui's    
+                                                       S1-06. create task list table  
+                                                       S1-07. create summary table    
+                                                       S1-08. create burndown list    
+                                                       S1-09. create burndown chart   
+                                                       S1-10. create scrum board      
+
+3.2 SUMMARY 
 ============
   NAME    ESTIMATED   ACTUAL   DONE   REMAINING   PENCILS DOWN   PROGRESS    
  -------+-----------+--------+------+-----------+--------------+------------
-  ian            22       26     22           0     2012-12-03   ##########  
-  kevin          11       13     10           1     2012-12-04   #########-  
-  wil            23       13     19           4     2012-12-05   ########--  
+  ian            32       38     32           0     2012-12-05   ##########  
+  kevin           7        9      6           1     2012-12-06   #########-  
+  wil            17       10     13           4     2012-12-07   ########--  
 
-2.2 BURNDOWN CHART 
+3.3 BURNDOWN CHART 
 ===================
 '
 '                                    Burndown
 '
 '  60 +-----------+----------+-----------+-----------+----------+-----------+
-'     |                                                        IDEAL ...... |
 '     |     ###                                               ACTUAL ###### |
-'  50 +     ......                                                          +
-'     |          #.....                                                     |
-'     |           #####.....                                                |
-'  40 +                #####.                                               +
-'     |                      ......                                         |
-'     |                            .....                                    |
-'  30 +                             #   .                                   +
-'     |                             #    ......                             |
-'     |                              #         ......                       |
-'  20 +                               #              ....                   +
-'     |                               #                  .                  |
-'     |                                #                  ......            |
-'  10 +                                 #                       .....       +
-'     |                                 #                            .      |
-'     |                                  #############                ......|
+'     |        ##                                              IDEAL ...... |
+'  50 +     .....#                                                          +
+'     |           ###########                                               |
+'     |                ..... ######                                         |
+'  40 +                     .      #                                        +
+'     |                      ...... #                                       |
+'     |                            ..#..                                    |
+'  30 +                               # .                                   +
+'     |                                # ......                             |
+'     |                                 #      ......                       |
+'  20 +                                  ###         ....                   +
+'     |                                     ##           .                  |
+'     |                                       #           ......            |
+'  10 +                                        ################ .....       +
+'     |                                                        #     .      |
+'     |                                                         #     ......|
 '   0 +-----------+----------+-----------+-----------+----------+-----------.
 '     0           2          4           6           8          10          12
 '
 '
 
-2.3 BURNDOWN LIST 
+3.4 BURNDOWN LIST 
 ==================
-  DAY         DATE   IDEAL   ACTUAL   TASKS COMPLETED          
- -----+------------+-------+--------+-------------------------
-    1   2012-11-26      51       55   S1.03                    
-    2   2012-11-27      47       44   S1.07 S1.05 S1.02        
-    3   2012-11-28      42       41   S1.08                    
-    4   2012-11-29      37       38   S1.04                    
-    5   2012-11-30      33       34   S1.01                    
-    6   2012-12-01      28        5   S1.11 S1.10 S1.09 S1.06  
-    7   2012-12-02      23        5                            
-    8   2012-12-03      19        5                            
-    9   2012-12-04      14                                     
-   10   2012-12-05       9                                     
-   11   2012-12-06       5                                     
-   12   2012-12-07       0                                     
+  DAY         DATE   ACTUAL   IDEAL   TASKS COMPLETED    
+ -----+------------+--------+-------+-------------------
+    1   2012-11-26       56      51                      
+    2   2012-11-27       48      47   S1-05 S1-02        
+    3   2012-11-28       47      42   S1-03              
+    4   2012-11-29       44      37   S1-04              
+    5   2012-11-30       40      33   S1-01              
+    6   2012-12-01       21      28   S1-08 S1-07 S1-06  
+    7   2012-12-02       11      23   S1-09              
+    8   2012-12-03       11      19                      
+    9   2012-12-04       11      14                      
+   10   2012-12-05        5       9   S1-10              
+   11   2012-12-06                5                      
+   12   2012-12-07                0                      
 
-2.4 TASK LIST 
+3.5 TASK LIST 
 ==============
-  ITEM                                  TASKID   OWNER       PRIORITY   TODO      ESTIMATED   ACTUAL  
- -------------------------------------+--------+-----------+----------+---------+-----------+--------
-    TASKS                                                                                50       49  
- -------------------------------------+--------+-----------+----------+---------+-----------+--------
-     RESEARCH                                                                             8       14  
-      learn elisp                       S1.01    ian         B          DONE              4       10  
-      learn org mode                    S1.02    kevin ian   B          DONE              4        4  
- -------------------------------------+--------+-----------+----------+---------+-----------+--------
-     ENVIRONMENT                                                                          4        4  
-      set up project folder [3/3]       S1.03    kevin       A          DONE              1        1  
-      write example org file            S1.04    wil         A          DONE              3        3  
- -------------------------------------+--------+-----------+----------+---------+-----------+--------
-     DESIGN                                                                               4        3  
-      draw up reports ui's              S1.05    wil         A          DONE              4        3  
- -------------------------------------+--------+-----------+----------+---------+-----------+--------
-     CODING                                                                              29       27  
-      create task list table            S1.06    wil         A          DONE              6        3  
-       compute and draw progress bars   S1.07    wil         B          DONE              3        2  
-       compute 'pencils down' date      S1.08    wil         B          DONE              3        1  
-      create summary table              S1.09    kevin       A          DONE              5        8  
-      create burndown list              S1.10    ian         B          DONE              8       12  
-      create burndown chart             S1.11    ian wil     C          DONE             10        4  
- -------------------------------------+--------+-----------+----------+---------+-----------+--------
-     PUBLISH                                                                              5        1  
-      add license to src files          S1.12    wil         C          TODO              1           
-      write doc                         S1.13    wil         C          STARTED           3        1  
-      post to github [0/2]              S1.14    kevin ian   B          TODO              1           
+  ITEM                               TASKID   OWNER       PRIORITY   TODO      ESTIMATED   ACTUAL  
+ ----------------------------------+--------+-----------+----------+---------+-----------+--------
+    TASKS                                                                             56       57  
+ ----------------------------------+--------+-----------+----------+---------+-----------+--------
+     Research                                                                          8       14  
+      learn elisp                    S1-01    ian         B          DONE              4       10  
+      learn org mode                 S1-02    ian         B          DONE              4        4  
+ ----------------------------------+--------+-----------+----------+---------+-----------+--------
+     ENVIRONMENT                                                                       4        4  
+      set up project folder [3/3]    S1-03    kevin       A          DONE              1        1  
+      write example org file         S1-04    wil         A          DONE              3        3  
+ ----------------------------------+--------+-----------+----------+---------+-----------+--------
+     DESIGN                                                                            4        3  
+      draw up reports ui's           S1-05    wil         A          DONE              4        3  
+ ----------------------------------+--------+-----------+----------+---------+-----------+--------
+     CODING                                                                           35       35  
+      create task list table [2/2]   S1-06    wil kevin   A          DONE              6        3  
+      create summary table           S1-07    kevin       A          DONE              5        8  
+      create burndown list           S1-08    ian         B          DONE              8       12  
+      create burndown chart          S1-09    ian wil     C          DONE             10        4  
+      create scrum board             S1-10    ian         B          DONE              6        8  
+ ----------------------------------+--------+-----------+----------+---------+-----------+--------
+     PUBLISH                                                                           5        1  
+      add license to src files       S1-11    wil         C          TODO              1           
+      write doc                      S1-12    wil         C          STARTED           3        1  
+      post to github [0/2]           S1-13    kevin ian   B          TODO              1           
+
