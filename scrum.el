@@ -31,6 +31,17 @@
 (require 'cl)
 (require 'gnuplot)
 
+(defgroup scrum nil
+  "scrum reporting options"
+  :tag "Scrum"
+  :group 'scrum
+)
+(defcustom scrum-taskid-prefix "T"
+  "prefix added to taskids"
+  :type 'string
+  :group 'scrum
+)
+
 (defun get-developers ()
   "get list of developer (name . wpd)"
   (let (ret)
@@ -116,7 +127,7 @@
                                                         ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
                                           (cons
                                            (org-make-link-string (org-make-org-heading-search-string)
-                                                                 (concat (org-entry-get (point) "TASKID") " " (nth 4 (org-heading-components))))
+                                                                 (concat (org-entry-get (point) "TASKID") ". " (nth 4 (org-heading-components))))
                                            colstr)))))
     (goto-char topleft)
     (dotimes (ii (max (max ntodo nstarted) ndone))
@@ -240,7 +251,7 @@
   (save-excursion
     (let ((ii 1))
       (visit-all-task-todos (lambda ()
-                              (org-entry-put (point) "TASKID" (format "T%02d" ii))
+                              (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
                               (setq ii (1+ ii)))))))
 
 (defun scrum-update ()
