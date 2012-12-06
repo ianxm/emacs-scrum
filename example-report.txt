@@ -2,7 +2,7 @@
                      ============================
 
 Author: ian <ianxm@jhu.edu>
-Date: 2012-12-05 23:59:22 EST
+Date: 2012-12-06 00:07:07 EST
 
 
 
@@ -27,14 +27,12 @@ Table of Contents
         1.5.1 add license to src files 
         1.5.2 write doc 
         1.5.3 post to github [0/2] 
-2 BACKLOG 
-    2.1 links in scrum board 
-3 REPORTS 
-    3.1 SCRUM BOARD 
-    3.2 SUMMARY 
-    3.3 BURNDOWN CHART 
-    3.4 BURNDOWN LIST 
-    3.5 TASK LIST 
+2 REPORTS 
+    2.1 SCRUM BOARD 
+    2.2 SUMMARY 
+    2.3 BURNDOWN CHART 
+    2.4 BURNDOWN LIST 
+    2.5 TASK LIST 
 
 
 1 TASKS 
@@ -131,16 +129,10 @@ Table of Contents
     - [ ] create a project
     - [ ] push repo
 
-2 BACKLOG 
+2 REPORTS 
 ~~~~~~~~~~
 
-2.1 TODO links in scrum board 
-==============================
-
-3 REPORTS 
-~~~~~~~~~~
-
-3.1 SCRUM BOARD 
+2.1 SCRUM BOARD 
 ================
   TODO                              STARTED            DONE                           
  ---------------------------------+------------------+-------------------------------
@@ -155,7 +147,7 @@ Table of Contents
                                                        S1-09. create burndown chart   
                                                        S1-10. create scrum board      
 
-3.2 SUMMARY 
+2.2 SUMMARY 
 ============
   NAME    ESTIMATED   ACTUAL   DONE   REMAINING   PENCILS DOWN   PROGRESS    
  -------+-----------+--------+------+-----------+--------------+------------
@@ -163,7 +155,7 @@ Table of Contents
   kevin           7        9      6           1     2012-12-06   #########-  
   wil            17       10     13           4     2012-12-07   ########--  
 
-3.3 BURNDOWN CHART 
+2.3 BURNDOWN CHART 
 ===================
 '
 '                                    Burndown
@@ -191,7 +183,7 @@ Table of Contents
 '
 '
 
-3.4 BURNDOWN LIST 
+2.4 BURNDOWN LIST 
 ==================
   DAY         DATE   ACTUAL   IDEAL   TASKS COMPLETED    
  -----+------------+--------+-------+-------------------
@@ -208,32 +200,32 @@ Table of Contents
    11   2012-12-06                5                      
    12   2012-12-07                0                      
 
-3.5 TASK LIST 
+2.5 TASK LIST 
 ==============
   ITEM                               TASKID   OWNER       PRIORITY   TODO      ESTIMATED   ACTUAL  
  ----------------------------------+--------+-----------+----------+---------+-----------+--------
-    TASKS                                                                             56       57  
+  * TASKS                                                                             56       57  
  ----------------------------------+--------+-----------+----------+---------+-----------+--------
-     Research                                                                          8       14  
-      learn elisp                    S1-01    ian         B          DONE              4       10  
-      learn org mode                 S1-02    ian         B          DONE              4        4  
+  ** Research                                                                          8       14  
+  *** learn elisp                    S1-01    ian         B          DONE              4       10  
+  *** learn org mode                 S1-02    ian         B          DONE              4        4  
  ----------------------------------+--------+-----------+----------+---------+-----------+--------
-     ENVIRONMENT                                                                       4        4  
-      set up project folder [3/3]    S1-03    kevin       A          DONE              1        1  
-      write example org file         S1-04    wil         A          DONE              3        3  
+  ** ENVIRONMENT                                                                       4        4  
+  *** set up project folder [3/3]    S1-03    kevin       A          DONE              1        1  
+  *** write example org file         S1-04    wil         A          DONE              3        3  
  ----------------------------------+--------+-----------+----------+---------+-----------+--------
-     DESIGN                                                                            4        3  
-      draw up reports ui's           S1-05    wil         A          DONE              4        3  
+  ** DESIGN                                                                            4        3  
+  *** draw up reports ui's           S1-05    wil         A          DONE              4        3  
  ----------------------------------+--------+-----------+----------+---------+-----------+--------
-     CODING                                                                           35       35  
-      create task list table [2/2]   S1-06    wil kevin   A          DONE              6        3  
-      create summary table           S1-07    kevin       A          DONE              5        8  
-      create burndown list           S1-08    ian         B          DONE              8       12  
-      create burndown chart          S1-09    ian wil     C          DONE             10        4  
-      create scrum board             S1-10    ian         B          DONE              6        8  
+  ** CODING                                                                           35       35  
+  *** create task list table [2/2]   S1-06    wil kevin   A          DONE              6        3  
+  *** create summary table           S1-07    kevin       A          DONE              5        8  
+  *** create burndown list           S1-08    ian         B          DONE              8       12  
+  *** create burndown chart          S1-09    ian wil     C          DONE             10        4  
+  *** create scrum board             S1-10    ian         B          DONE              6        8  
  ----------------------------------+--------+-----------+----------+---------+-----------+--------
-     PUBLISH                                                                           5        1  
-      add license to src files       S1-11    wil         C          TODO              1           
-      write doc                      S1-12    wil         C          STARTED           3        1  
-      post to github [0/2]           S1-13    kevin ian   B          TODO              1           
+  ** PUBLISH                                                                           5        1  
+  *** add license to src files       S1-11    wil         C          TODO              1           
+  *** write doc                      S1-12    wil         C          STARTED           3        1  
+  *** post to github [0/2]           S1-13    kevin ian   B          TODO              1           
 

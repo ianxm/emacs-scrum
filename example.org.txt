@@ -142,7 +142,7 @@
     :END:
     - [ ] create a project
     - [ ] push repo
-* BACKLOG
+* BACKLOG                                                          :noexport:
 ** TODO links in scrum board
 * REPORTS
 ** SCRUM BOARD

@@ -21,6 +21,9 @@
 
   scrum.el generates the following:
 
+  a scrum board made up of the tasks arranged in columns based on
+  their TODO status.
+
   the SUMMARY table (example section 2.1) provides the following info
   for each developer:
   - ESTIMATED total estimated time of their tasks
@@ -44,6 +47,9 @@
     first name is considered the owner.
   - ESTIMATED hours the task owner thinks the task will require
   - ACTUAL hours spent on the task
+
+  for convenience, scrum.el also defines a command (M-x
+  scrum-reset-taskids) that resets task id's to consecutive values.
 
 * setup
 
