@@ -93,7 +93,7 @@
   "draw a progress bar in the summary table"
   (let ((width 10)
         (blocksdone 5))
-    (setq blocksdone (round (* (/ (* done 1.0) est) width)))
+    (setq blocksdone (round (* (if (= 0 est) 0 (/ (* done 1.0) est)) width)))
     (concat
      (apply 'concat (make-list blocksdone "#"))
      (apply 'concat (make-list (- width blocksdone) "-")))))
