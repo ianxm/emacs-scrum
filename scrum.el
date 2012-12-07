@@ -113,23 +113,27 @@
         (nstarted 0)            ;; number of started found
         (ndone 0)               ;; number of done found
         colstr topleft)
-    (insert "| TODO | STARTED | DONE |\n|-")
+    (insert "| NOT STARTED | IN PROGRESS | DONE |\n|-")
     (setq topleft (point))
     (setq todos (visit-all-task-todos (lambda ()
                                         (let* ((todo (org-entry-get (point) "TODO"))
                                                (heading (nth 4 (org-heading-components)))
                                                (hdgbracket (string-match "\\[" heading))
-                                               (maxlen 30))
+                                               (maxlen 30)
+                                               owner)
                                           (if hdgbracket
                                               (setq heading (substring heading 0 (1- hdgbracket))))
                                           (setq colstr (cond
                                                         ((string= todo "TODO") (progn (setq ntodo (1+ ntodo))) "| |")
                                                         ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
                                                         ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
+                                          (if (string= todo "STARTED")
+                                              (setq owner (org-entry-get (point) "OWNER")))
                                           (cons
                                            (concat (org-entry-get (point) "TASKID")
                                                    ". "
-                                                   (substring heading 0 (min (length heading) maxlen)))
+                                                   (substring heading 0 (min (length heading) maxlen))
+                                                   (if (null owner) "" (concat " (" owner ")")))
                                            ;; removed links because they cluttered ascii export
                                            ;; (org-make-link-string (org-make-org-heading-search-string)
                                            ;;                       (concat (org-entry-get (point) "TASKID")

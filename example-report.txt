@@ -2,7 +2,7 @@
                      ============================
 
 Author: ian <ianxm@jhu.edu>
-Date: 2012-12-06 00:07:07 EST
+Date: 2012-12-06 22:43:34 EST
 
 
 
@@ -29,7 +29,7 @@ Table of Contents
         1.5.3 post to github [0/2] 
 2 REPORTS 
     2.1 SCRUM BOARD 
-    2.2 SUMMARY 
+    2.2 DEVELOPER SUMMARY 
     2.3 BURNDOWN CHART 
     2.4 BURNDOWN LIST 
     2.5 TASK LIST 
@@ -134,26 +134,26 @@ Table of Contents
 
 2.1 SCRUM BOARD 
 ================
-  TODO                              STARTED            DONE                           
- ---------------------------------+------------------+-------------------------------
-  S1-11. add license to src files   S1-12. write doc   S1-01. learn elisp             
-  S1-13. post to github                                S1-02. learn org mode          
-                                                       S1-03. set up project folder   
-                                                       S1-04. write example org file  
-                                                       S1-05. draw up reports ui's    
-                                                       S1-06. create task list table  
-                                                       S1-07. create summary table    
-                                                       S1-08. create burndown list    
-                                                       S1-09. create burndown chart   
-                                                       S1-10. create scrum board      
+  NOT STARTED                       IN PROGRESS              DONE                           
+ ---------------------------------+------------------------+-------------------------------
+  S1-11. add license to src files   S1-12. write doc (wil)   S1-01. learn elisp             
+  S1-13. post to github                                      S1-02. learn org mode          
+                                                             S1-03. set up project folder   
+                                                             S1-04. write example org file  
+                                                             S1-05. draw up reports ui's    
+                                                             S1-06. create task list table  
+                                                             S1-07. create summary table    
+                                                             S1-08. create burndown list    
+                                                             S1-09. create burndown chart   
+                                                             S1-10. create scrum board      
 
-2.2 SUMMARY 
-============
+2.2 DEVELOPER SUMMARY 
+======================
   NAME    ESTIMATED   ACTUAL   DONE   REMAINING   PENCILS DOWN   PROGRESS    
  -------+-----------+--------+------+-----------+--------------+------------
-  ian            32       38     32           0     2012-12-05   ##########  
-  kevin           7        9      6           1     2012-12-06   #########-  
-  wil            17       10     13           4     2012-12-07   ########--  
+  ian            32       38     32           0     2012-12-06   ##########  
+  kevin           7        9      6           1     2012-12-07   #########-  
+  wil            17       10     13           4     2012-12-10   ########--  
 
 2.3 BURNDOWN CHART 
 ===================
