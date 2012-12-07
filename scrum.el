@@ -160,10 +160,13 @@
         (error "no developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
     (dolist (developer developers)
-      (setq est  (get-prop-value (concat "OWNER={^" (car developer) ".*}") "ESTIMATED"))
+      (setq est  (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"TODO\""
+                                         "|OWNER={^" (car developer) ".*}+TODO=\"STARTED\""
+                                         "|OWNER={^" (car developer) ".*}+TODO=\"DONE\"") "ESTIMATED"))
       (setq act  (get-prop-value (concat "OWNER={^" (car developer) ".*}") "ACTUAL"))
       (setq done (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"DONE\"") "ESTIMATED"))
-      (setq rem  (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"TODO\"|" "OWNER={^" (car developer) ".*}+TODO=\"STARTED\"") "ESTIMATED"))
+      (setq rem  (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"TODO\""
+                                         "|OWNER={^" (car developer) ".*}+TODO=\"STARTED\"") "ESTIMATED"))
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
