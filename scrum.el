@@ -226,17 +226,24 @@
 
     (setq tot (get-prop-value nil "ESTIMATED"))
     (setq totleft tot)
-    (org-map-entries (lambda ()
+    (org-map-entries (lambda () ;; look up start date and sprint length
                        (setq cdate (apply 'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART")))))
-                       (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH")))) "ID=\"TASKS\"")
+                       (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
+                     "ID=\"TASKS\"")
     (if (or (null cdate) (null sprintlength))
         (error "couldn't find node with ID=\"TASKS\" containing \"SPRINTLENGTH\" and \"SPRINTSTART\" properties"))
+
     (setq closed (org-map-entries (lambda ()
-        (let ((closetime (parse-time-string (org-entry-get (point) "CLOSED")))
-              (n 0))
-          (setq closetime (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closetime)) ;; clear time of day
+        (let ((n 0)
+              closetime
+              closestr)
+          (setq closetime (org-entry-get (point) "CLOSED"))
+          (if (null closetime)
+              (error (concat "\"" (nth 4 (org-heading-components)) "\" is marked DONE but doesn't have a CLOSED date")))
+          (setq closestr (parse-time-string closetime))
+          (setq closestr (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closestr)) ;; clear time of day
           (list
-           (apply 'encode-time closetime)
+           (apply 'encode-time closestr)
            (string-to-number (org-entry-get (point) "ESTIMATED"))
            (org-entry-get (point) "TASKID"))))
                                   "TODO=\"DONE\""))
