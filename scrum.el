@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2012 Ian Martins
 
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Keywords: scrum burndown
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: http://github.com/ianxm/emacs-scrum
@@ -39,6 +39,29 @@
 (defcustom scrum-taskid-prefix "T"
   "prefix added to taskids"
   :type 'string
+  :group 'scrum
+)
+(defcustom scrum-board-links nil
+  "if true, make the items in the scrum board links"
+  :type 'boolean
+  :group 'scrum
+)
+(defcustom scrum-board-format 3
+  "specify the format of the scrum board items
+1. \"id\"
+2. \"name\"
+3. \"id. name\"
+"
+  :type 'integer
+  :group 'scrum
+)
+(defcustom scrum-board-show-owners 2
+  "show task owners on the scrum board
+1. never
+2. only for in progress tasks
+3. always
+"
+  :type 'integer
   :group 'scrum
 )
 
@@ -116,40 +139,43 @@
     (insert "| NOT STARTED | IN PROGRESS | DONE |\n|-")
     (setq topleft (point))
     (setq todos (visit-all-task-todos (lambda ()
-                                        (let* ((todo (org-entry-get (point) "TODO"))
-                                               (heading (nth 4 (org-heading-components)))
-                                               (hdgbracket (string-match "\\[" heading))
-                                               (maxlen 30)
-                                               owner)
-                                          (if hdgbracket
-                                              (setq heading (substring heading 0 (1- hdgbracket))))
-                                          (setq colstr (cond
-                                                        ((string= todo "TODO") (progn (setq ntodo (1+ ntodo))) "| |")
-                                                        ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
-                                                        ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
-                                          (if (string= todo "STARTED")
-                                              (setq owner (org-entry-get (point) "OWNER")))
-                                          (if (string= todo "DEFERRED")
-                                              nil
-                                            (cons
-                                             (concat (org-entry-get (point) "TASKID")
-                                                     ". "
-                                                     (substring heading 0 (min (length heading) maxlen))
-                                                     (if (null owner) "" (concat " (" owner ")")))
-                                             ;; removed links because they cluttered ascii export
-                                             ;; (org-make-link-string (org-make-org-heading-search-string)
-                                             ;;                       (concat (org-entry-get (point) "TASKID")
-                                             ;;                               ". "
-                                             ;;                               (substring heading 0 (min (length heading) maxlen))))
-                                             colstr))))))
-    (goto-char topleft)
+        (let* ((todo (org-entry-get (point) "TODO"))
+               (heading (nth 4 (org-heading-components)))
+               (hdgbracket (string-match "\\[" heading))
+               (maxlen 30)
+               owner label)
+          (if hdgbracket
+              (setq heading (substring heading 0 (1- hdgbracket))))
+          (setq colstr (cond
+                        ((string= todo "TODO") (progn (setq ntodo (1+ ntodo))) "| |")
+                        ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
+                        ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
+          (setq owner (org-entry-get (point) "OWNER"))
+          (setq heading (substring heading 0 (min (length heading) maxlen)))    ;; truncate heading
+          (cond                                                                 ;; scrum board label
+           ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
+           ((= 2 scrum-board-format) (setq label heading))
+           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " heading))))
+          (if                                                                   ;; add owner to label
+              (or (and 
+                   (= 2 scrum-board-show-owners)
+                   (string= todo "STARTED"))
+                  (= 3 scrum-board-show-owners))
+              (setq  label (concat label " (" owner ")")))
+          (if scrum-board-links
+              (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
+          (if (string= todo "DEFERRED")
+              nil
+            (cons label colstr))))))
+
+    (goto-char topleft)                 ;; lay out empty table rows
     (dotimes (ii (max (max ntodo nstarted) ndone))
       (insert "\n| |  |   |"))          ;; different number of spaces for each col
 
-    (dolist (item todos)
+    (dolist (item todos)                ;; fill in table
       (unless (null item)
         (goto-char topleft)
-        (search-forward (cdr item))       ;; find col based on number of spaces
+        (search-forward (cdr item))     ;; find col based on number of spaces
         (forward-char -1)
         (insert (car item))))
   (goto-char topleft)
@@ -205,13 +231,13 @@
     (if (or (null cdate) (null sprintlength))
         (error "couldn't find node with ID=\"TASKS\" containing \"SPRINTLENGTH\" and \"SPRINTSTART\" properties"))
     (setq closed (org-map-entries (lambda ()
-                                    (let ((closetime (parse-time-string (org-entry-get (point) "CLOSED")))
-                                          (n 0))
-                                      (setq closetime (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closetime)) ;; clear time of day
-                                      (list
-                                       (apply 'encode-time closetime)
-                                       (string-to-number (org-entry-get (point) "ESTIMATED"))
-                                       (org-entry-get (point) "TASKID"))))
+        (let ((closetime (parse-time-string (org-entry-get (point) "CLOSED")))
+              (n 0))
+          (setq closetime (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closetime)) ;; clear time of day
+          (list
+           (apply 'encode-time closetime)
+           (string-to-number (org-entry-get (point) "ESTIMATED"))
+           (org-entry-get (point) "TASKID"))))
                                   "TODO=\"DONE\""))
     (while (<= day sprintlength)
       ;; (message "cdate %d %s" day (format-time-string "%Y-%m-%d %H:%M:%S" cdate))
