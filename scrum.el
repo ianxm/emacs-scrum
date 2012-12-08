@@ -58,7 +58,7 @@
 (defcustom scrum-board-show-owners 2
   "show task owners on the scrum board
 1. never
-2. only for in progress tasks
+2. only for \"in progress\" tasks
 3. always
 "
   :type 'integer
@@ -122,6 +122,7 @@
      (apply 'concat (make-list (- width blocksdone) "-")))))
 
 (defun visit-all-task-todos (fcn)
+  "call the given function in all tasks in the current tree"
     (let (tasks)
       (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
       (goto-char tasks)
@@ -298,9 +299,10 @@
   (interactive)
   (save-excursion
     (let ((ii 1))
-      (visit-all-task-todos (lambda ()
-                              (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
-                              (setq ii (1+ ii)))))))
+      (org-map-entries (lambda ()
+                         (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
+                         (setq ii (1+ ii)))
+                       "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree))))
 
 (defun scrum-update ()
   "update dynamic blocks in a scrum org file"
