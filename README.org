@@ -61,7 +61,7 @@
   5. get [[https://raw.github.com/ianxm/emacs-scrum/master/scrum.el][scrum.el]], add it to your emacs installation
   6. copy the template [[https://raw.github.com/ianxm/emacs-scrum/master/scrum-template.org.txt][scrum-template.org]] file to your system and
      open it in emacs
-  7. run 'M-x scrum-update'
+  7. run "M-x scrum-update"
 
 * usage
 
@@ -71,12 +71,12 @@
    org file on which it is running.  if something is missing, it will
    let you know.
 
-*** header boilerplate
+*** boilerplate header block
 
-     add this block at the top of the file.  defines some parameters
-     that org-mode uses when it exports, and defines the TODO states
-     here, and creating the OWNER, ESTIMATED, and ACTUAL properties
-     for tasks.
+     add this block at the top of the file.  it defines some
+     parameters that org-mode uses when it exports, defines the TODO
+     states here, and creating the OWNER, ESTIMATED, and ACTUAL
+     properties for tasks.
 
 #+BEGIN_SRC org-mode
 #+TITLE: [your report title]
@@ -94,13 +94,13 @@
     root headline of the tasks tree.
 
     1. the root headline must have the following properties:
-       - ID should be set to 'TASKS'
+       - ID should be set to "TASKS"
        - SPRINTLENGTH is the number of days in the spring
        - SPRINTSTART is the date on which the sprint begins
     2. the root headline must have a property for each developer
        specifying their name and the number of hours per day they
        expect to work on this project.  names should be prefixed with
-       'wpd-'.  for example, ":wpd-ian: 3" mean ian is expecting to
+       "wpd-".  for example, ":wpd-ian: 3" mean ian is expecting to
        work on this project for 3 hours per day.
     3. tasks (headlines with TODO's) should have OWNER ESTIMATED and
        ACTUAL properties.
@@ -136,17 +136,47 @@
 
 ** updating generated content
 
-   generated content can be updated by running 'M-x scrum-update'
+   generated content can be updated by running "M-x scrum-update"
 
-   alternatively, individual blocks can be updated by doing a 'C-c
-   C-c' with the point on a dynamic block "#+BEGIN" line.
+   alternatively, individual blocks can be updated by doing a "C-c
+   C-c" with the point on a dynamic block "#+BEGIN" line.
 
-* bugs
+  "M-x scrum-reset-taskids" will set all task id's to consecutive
+  values for the tree at the point.  the values are two digits
+  starting from one and prefixed with the string given by the variable
+  "scrum-taskid-prefix".
+
+** customization
+
+   scrum.el defines several variables that can be used to customize
+   the content it generates.
+
+   - scrum-taskid-prefix
+     prefix added to taskids. defaults to "T"
+
+   - scrum-board-format
+     specify the format of the scrum board items
+     1. id
+     2. name
+     3. id. name
+
+   - scrum-board-show-owners
+     show task owners on the scrum board
+     1. never
+     2. only for "in progress" tasks
+     3. always
+
+   - scrum-board-links
+     if true, make the items in the scrum board links
+
+* todo
 
   - I'm not sure if gnuplot.el works on windows.
   - org mode treats the ascii graph as a table because of the pipe
     character borders.  prefixing lines with apostrophes helps for
     ascii export, but html export is a mess.
   - gnuplot shouldn't have to write the graph to a temp file.
+  - handle variable TODO state lists
+
 
 #+TITLE:
