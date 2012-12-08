@@ -129,26 +129,29 @@
                                                         ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
                                           (if (string= todo "STARTED")
                                               (setq owner (org-entry-get (point) "OWNER")))
-                                          (cons
-                                           (concat (org-entry-get (point) "TASKID")
-                                                   ". "
-                                                   (substring heading 0 (min (length heading) maxlen))
-                                                   (if (null owner) "" (concat " (" owner ")")))
-                                           ;; removed links because they cluttered ascii export
-                                           ;; (org-make-link-string (org-make-org-heading-search-string)
-                                           ;;                       (concat (org-entry-get (point) "TASKID")
-                                           ;;                               ". "
-                                           ;;                               (substring heading 0 (min (length heading) maxlen))))
-                                           colstr)))))
+                                          (if (string= todo "DEFERRED")
+                                              nil
+                                            (cons
+                                             (concat (org-entry-get (point) "TASKID")
+                                                     ". "
+                                                     (substring heading 0 (min (length heading) maxlen))
+                                                     (if (null owner) "" (concat " (" owner ")")))
+                                             ;; removed links because they cluttered ascii export
+                                             ;; (org-make-link-string (org-make-org-heading-search-string)
+                                             ;;                       (concat (org-entry-get (point) "TASKID")
+                                             ;;                               ". "
+                                             ;;                               (substring heading 0 (min (length heading) maxlen))))
+                                             colstr))))))
     (goto-char topleft)
     (dotimes (ii (max (max ntodo nstarted) ndone))
       (insert "\n| |  |   |"))          ;; different number of spaces for each col
 
     (dolist (item todos)
-      (goto-char topleft)
-      (search-forward (cdr item))       ;; find col based on number of spaces
-      (forward-char -1)
-      (insert (car item)))
+      (unless (null item)
+        (goto-char topleft)
+        (search-forward (cdr item))       ;; find col based on number of spaces
+        (forward-char -1)
+        (insert (car item))))
   (goto-char topleft)
   (org-ctrl-c-ctrl-c)))
 
