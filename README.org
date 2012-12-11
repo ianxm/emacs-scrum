@@ -52,6 +52,9 @@
   for convenience, scrum.el also defines a command (M-x
   scrum-reset-taskids) that sets task id's to consecutive values.
 
+  scrum.el can also create a pdf for printing out cards for sticking
+  on a physical scrum board.
+
 * setup
 
   1. install emacs
@@ -112,11 +115,11 @@
 
 *** report blocks
 
-     the generated content is written to dynamic blocks embedded in
-     the same org file on which it is operating.  org-mode needs those
-     blocks to have BEGIN and END statements so that it knows where to
-     write the generated content.  to that end, this needs to be
-     somewhere in the file.
+    the generated content is written to dynamic blocks embedded in
+    the same org file on which it is operating.  org-mode needs those
+    blocks to have BEGIN and END statements so that it knows where to
+    write the generated content.  to that end, this needs to be
+    somewhere in the file.
      
 #+BEGIN_SRC org-mode
 
@@ -142,10 +145,17 @@
    alternatively, individual blocks can be updated by doing a "C-c
    C-c" with the point on a dynamic block "#+BEGIN" line.
 
-  "M-x scrum-reset-taskids" will set all task id's to consecutive
-  values for the tree at the point.  the values are two digits
-  starting from one and prefixed with the string given by the variable
-  "scrum-taskid-prefix".
+   "M-x scrum-reset-taskids" will set all task id's to consecutive
+   values for the tree at the point.  the values are two digits
+   starting from one and prefixed with the string given by the
+   variable "scrum-taskid-prefix".
+
+** scrum cards
+
+   scrum.el can generate a pdf (using texi2pdf) of task cards that can
+   be printed out and stuck on a physical scrum board.  each card
+   contains the task's id, owner, estimate, actual, and headline text.
+   the pdf will be named "scrum_cards.pdf"
 
 ** customization
 

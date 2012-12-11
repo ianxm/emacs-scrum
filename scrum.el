@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2012 Ian Martins
 
-;; Version: 0.0.2
+;; Version: 0.0.3
 ;; Keywords: scrum burndown
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: http://github.com/ianxm/emacs-scrum
@@ -313,6 +313,43 @@
                          (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
                          (setq ii (1+ ii)))
                        "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree))))
+
+(defun scrum-generate-task-cards ()
+  "generate scrum board task cards in latex format.  writes to \"scrum_cards.pdf\""
+  (interactive)
+  (save-excursion
+    (let (str)
+      (setq str "
+\\documentclass[letterpaper,12pt]{article}
+\\usepackage[top=0.5in, bottom=0.5in, left=0.5in, right=0.5in]{geometry}
+\\begin{document}
+\\pagestyle{empty}
+\\twocolumn
+\n")
+      (visit-all-task-todos (lambda ()
+        (let (id owner est hdl)
+          (setq id (org-entry-get (point) "TASKID"))
+          (setq id (if (null id) "\\_\\_\\_" id))
+          (setq owner (org-entry-get (point) "OWNER"))
+          (setq owner (if (null owner) "\\_\\_\\_" owner))
+          (setq est (org-entry-get (point) "ESTIMATED"))
+          (setq est (if (null est) "\\_\\_\\_" est))
+          (setq hdl (nth 4 (org-heading-components)))
+          (setq str (concat str (format "
+\\filbreak
+\\begin{flushright}
+  id: %s\\\\
+  owner: %s\\\\
+  estimate: %s\\\\
+  actual: \\_\\_\\_
+\\end{flushright}
+%s\\\\
+" id owner est hdl))))))
+      (setq str (concat str "\n\\end{document}\n"))
+      (with-temp-file "scrum_cards.tex"
+        (insert str))
+      (shell-command "texi2pdf scrum_cards.tex" 
+                     (get-buffer-create "*Standard output*")))))
 
 (defun scrum-update ()
   "update dynamic blocks in a scrum org file"
