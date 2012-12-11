@@ -81,14 +81,17 @@
     ret))
 
 (defun get-prop-value (match prop)
-  "sum property values for given match"
-  (let ((val 0)
-        ret)
-    (setq ret (org-map-entries (lambda () (org-entry-get (point) prop)) match))
-    (setq ret (remove-if (lambda (ii) (= (length ii) 0)) ret))
-    (while ret 
-      (setq val (+ val (string-to-number (pop ret)))))
-    val))
+  "sum property values for given match on TASKS tree"
+  (save-excursion
+    (let ((val 0)
+          taskspos ret)
+      (org-map-entries (lambda () (setq taskspos (point))) "ID=\"TASKS\"")
+      (goto-char taskspos)
+      (setq ret (org-map-entries (lambda () (org-entry-get (point) prop)) match 'tree))
+      (setq ret (remove-if (lambda (ii) (= (length ii) 0)) ret))
+      (while ret 
+        (setq val (+ val (string-to-number (pop ret)))))
+      val)))
 
 (defun get-finish-date (hours wpd)
   "count off the days to get the work done, skipping weekends"
@@ -184,7 +187,7 @@
 
 (defun org-dblock-write:block-update-summary (params)
   "generate scrum summary table"
-  (let ((developers nil)
+  (let (developers
         (est  0)                ;; hours estimated
         (act  0)                ;; actual hours spent
         (done 0)                ;; hours of estimates that are done
