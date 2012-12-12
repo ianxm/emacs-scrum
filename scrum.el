@@ -82,16 +82,13 @@
 
 (defun get-prop-value (match prop)
   "sum property values for given match on TASKS tree"
-  (save-excursion
-    (let ((val 0)
-          taskspos ret)
-      (org-map-entries (lambda () (setq taskspos (point))) "ID=\"TASKS\"")
-      (goto-char taskspos)
-      (setq ret (org-map-entries (lambda () (org-entry-get (point) prop)) match 'tree))
-      (setq ret (remove-if (lambda (ii) (= (length ii) 0)) ret))
-      (while ret 
-        (setq val (+ val (string-to-number (pop ret)))))
-      val)))
+  (let ((val 0)
+        ret)
+    (setq ret (visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
+    (setq ret (remove-if (lambda (ii) (= (length ii) 0)) ret))
+    (while ret 
+      (setq val (+ val (string-to-number (pop ret)))))
+    val))
 
 (defun get-finish-date (hours wpd)
   "count off the days to get the work done, skipping weekends"
@@ -124,13 +121,13 @@
      (apply 'concat (make-list blocksdone "#"))
      (apply 'concat (make-list (- width blocksdone) "-")))))
 
-(defun visit-all-task-todos (fcn)
+(defun visit-all-task-todos (fcn match)
   "call the given function in all tasks in the current tree"
     (let (tasks)
       (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
       (goto-char tasks)
       ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
-      (org-map-entries fcn "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree)))
+      (org-map-entries fcn match 'tree)))
 
 (defun org-dblock-write:block-update-board (params)
   (interactive)
@@ -170,14 +167,15 @@
               (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
           (if (string= todo "DEFERRED")
               nil
-            (cons label colstr))))))
+            (cons label colstr))))
+                "TODO<>\"\""))
 
     (goto-char topleft)                 ;; lay out empty table rows
     (dotimes (ii (max (max ntodo nstarted) ndone))
       (insert "\n| |  |   |"))          ;; different number of spaces for each col
 
     (dolist (item todos)                ;; fill in table
-      (unless (null item)
+      (when item
         (goto-char topleft)
         (search-forward (cdr item))     ;; find col based on number of spaces
         (forward-char -1)
@@ -260,7 +258,7 @@
                       (let ((ret (get-work-left cdate closed tot)))
                         (setq toremove (car ret))                   ;; save list of completed tasks
                         (setq tot (cdr ret))                        ;; save new total
-                        (if (not (null toremove))                   ;; remove completed from master list
+                        (if toremove                                ;; remove completed from master list
                             (dolist (item toremove)
                               (setq closed (delq item closed))))
                         (number-to-string tot))
@@ -312,7 +310,7 @@
       (org-map-entries (lambda ()
                          (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
                          (setq ii (1+ ii)))
-                       "TODO=\"TODO\"|TODO=\"STARTED\"|TODO=\"DONE\"|TODO=\"DEFERRED\"" 'tree))))
+                       "TODO<>\"\"" 'tree))))
 
 (defun scrum-generate-task-cards ()
   "generate scrum board task cards in latex format.  writes to \"scrum_cards.pdf\""
@@ -328,12 +326,9 @@
 \n")
       (visit-all-task-todos (lambda ()
         (let (id owner est hdl)
-          (setq id (org-entry-get (point) "TASKID"))
-          (setq id (if (null id) "\\_\\_\\_" id))
-          (setq owner (org-entry-get (point) "OWNER"))
-          (setq owner (if (null owner) "\\_\\_\\_" owner))
-          (setq est (org-entry-get (point) "ESTIMATED"))
-          (setq est (if (null est) "\\_\\_\\_" est))
+          (setq id (or (org-entry-get (point) "TASKID") "\\_\\_\\_"))
+          (setq owner (or (org-entry-get (point) "OWNER") "\\_\\_\\_"))
+          (setq est (or (org-entry-get (point) "ESTIMATED") "\\_\\_\\_"))
           (setq hdl (nth 4 (org-heading-components)))
           (setq str (concat str (format "
 \\filbreak
@@ -344,7 +339,8 @@
   actual: \\_\\_\\_
 \\end{flushright}
 %s\\\\
-" id owner est hdl))))))
+" id owner est hdl)))))
+        "TODO<>\"\"")
       (setq str (concat str "\n\\end{document}\n"))
       (with-temp-file "scrum_cards.tex"
         (insert str))
