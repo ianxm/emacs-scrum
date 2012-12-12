@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2012 Ian Martins
 
-;; Version: 0.0.3
+;; Version: 0.0.4
 ;; Keywords: scrum burndown
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: http://github.com/ianxm/emacs-scrum
@@ -55,13 +55,9 @@
   :type 'integer
   :group 'scrum
 )
-(defcustom scrum-board-show-owners 2
-  "show task owners on the scrum board
-1. never
-2. only for \"in progress\" tasks
-3. always
-"
-  :type 'integer
+(defcustom scrum-board-show-owners nil
+  "if true, show task owners on the scrum board"
+  :type 'boolean
   :group 'scrum
 )
 
@@ -133,52 +129,49 @@
 (defun org-dblock-write:block-update-board (params)
   (interactive)
   "generate scrum board"
-  (let ((todos)                 ;; list of (link . colstr)
-        (ntodo 0)               ;; number of todos found
-        (nstarted 0)            ;; number of started found
-        (ndone 0)               ;; number of done found
-        colstr topleft)
-    (insert "| NOT STARTED | IN PROGRESS | DONE |\n|-")
+  (let* ((todos)                 ;; list of (link . colstr)
+        (todokwds (append org-not-done-keywords org-done-keywords)) ;; list of all todo keywords
+        (counts (make-list (length todokwds) 0)) ;; count for each todo kwd
+        colstr topleft getindx)
+    (insert "| " (mapconcat 'identity todokwds "|") " |\n|-")
     (setq topleft (point))
+    (setq getindx (lambda (ii) (- (length todokwds) (length (member ii todokwds)))))
     (setq todos (visit-all-task-todos (lambda ()
         (let* ((todo (org-entry-get (point) "TODO"))
                (heading (nth 4 (org-heading-components)))
                (hdgbracket (string-match "\\[" heading))
                (maxlen 30)
-               owner label)
+               owner label indx)
           (if hdgbracket
               (setq heading (substring heading 0 (1- hdgbracket))))
-          (setq colstr (cond
-                        ((string= todo "TODO") (progn (setq ntodo (1+ ntodo))) "| |")
-                        ((string= todo "STARTED") (progn (setq nstarted (1+ nstarted))) "|  |")
-                        ((string= todo "DONE") (progn (setq ndone (1+ ndone))) "|   |")))
+          (setq indx (funcall getindx todo))
+          (setcar (nthcdr indx counts) (1+ (nth indx counts)))
+          (setq colstr (concat "|" (make-string (1+ indx) ? ) "|"))
           (setq owner (org-entry-get (point) "OWNER"))
           (setq heading (substring heading 0 (min (length heading) maxlen)))    ;; truncate heading
           (cond                                                                 ;; scrum board label
            ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
            ((= 2 scrum-board-format) (setq label heading))
            ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " heading))))
-          (if                                                                   ;; add owner to label
-              (or (and 
-                   (= 2 scrum-board-show-owners)
-                   (string= todo "STARTED"))
-                  (= 3 scrum-board-show-owners))
+          (if scrum-board-show-owners                                           ;; add owner to label
               (setq  label (concat label " (" owner ")")))
           (if scrum-board-links
               (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
-          (if (string= todo "DEFERRED")
-              nil
-            (cons label colstr))))
+          (cons label colstr)))
                 "TODO<>\"\""))
+    (let (range                           ;; range will be '(1 2 3..)
+          newrow)                         ;; newrow will be "| |  |   |..."
+      (dotimes (val (length counts) range)
+        (setq range (cons (- (length counts) val) range)))
+      (setq newrow (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|"))
+      (goto-char topleft)                 ;; lay out empty table rows
+      (dotimes (ii (reduce (lambda (a b) (max a b)) counts))
+        (insert (concat "\n" newrow))))   ;; different number of spaces for each col
 
-    (goto-char topleft)                 ;; lay out empty table rows
-    (dotimes (ii (max (max ntodo nstarted) ndone))
-      (insert "\n| |  |   |"))          ;; different number of spaces for each col
-
-    (dolist (item todos)                ;; fill in table
+    (dolist (item todos)                  ;; fill in table
       (when item
         (goto-char topleft)
-        (search-forward (cdr item))     ;; find col based on number of spaces
+        (search-forward (cdr item))       ;; find col based on number of spaces
         (forward-char -1)
         (insert (car item))))
   (goto-char topleft)
@@ -205,7 +198,7 @@
         (error "no developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
     (dolist (developer developers)
-      (setq est  (get-prop-value (scrum-create-match (car developer) (append org-done-keywords org-not-done-keywords)) "ESTIMATED"))
+      (setq est  (get-prop-value (scrum-create-match (car developer) (append org-not-done-keywords org-done-keywords)) "ESTIMATED"))
       (setq act  (get-prop-value (scrum-create-match (car developer) '()) "ACTUAL"))
       (setq done (get-prop-value (scrum-create-match (car developer) org-done-keywords) "ESTIMATED"))
       (setq rem  (get-prop-value (scrum-create-match (car developer) org-not-done-keywords) "ESTIMATED"))
