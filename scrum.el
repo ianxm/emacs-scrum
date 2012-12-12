@@ -123,11 +123,12 @@
 
 (defun visit-all-task-todos (fcn match)
   "call the given function in all tasks in the current tree"
+  (save-excursion
     (let (tasks)
       (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
       (goto-char tasks)
       ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
-      (org-map-entries fcn match 'tree)))
+      (org-map-entries fcn match 'tree))))
 
 (defun org-dblock-write:block-update-board (params)
   (interactive)
@@ -183,6 +184,15 @@
   (goto-char topleft)
   (org-ctrl-c-ctrl-c)))
 
+(defun scrum-create-match (owner todos)
+  "get a match string for the given owner and sequence of todo keywords"
+  (when (or owner todos)
+    (let (ownerstr)
+      (setq ownerstr (if owner (concat "OWNER={^" owner ".*}") ""))
+      (if (> (length todos) 0)
+          (mapconcat (lambda (ii) (concat ownerstr "+TODO=\"" ii "\"" )) todos "|")
+        ownerstr))))
+
 (defun org-dblock-write:block-update-summary (params)
   "generate scrum summary table"
   (let (developers
@@ -195,13 +205,10 @@
         (error "no developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
     (dolist (developer developers)
-      (setq est  (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"TODO\""
-                                         "|OWNER={^" (car developer) ".*}+TODO=\"STARTED\""
-                                         "|OWNER={^" (car developer) ".*}+TODO=\"DONE\"") "ESTIMATED"))
-      (setq act  (get-prop-value (concat "OWNER={^" (car developer) ".*}") "ACTUAL"))
-      (setq done (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"DONE\"") "ESTIMATED"))
-      (setq rem  (get-prop-value (concat "OWNER={^" (car developer) ".*}+TODO=\"TODO\""
-                                         "|OWNER={^" (car developer) ".*}+TODO=\"STARTED\"") "ESTIMATED"))
+      (setq est  (get-prop-value (scrum-create-match (car developer) (append org-done-keywords org-not-done-keywords)) "ESTIMATED"))
+      (setq act  (get-prop-value (scrum-create-match (car developer) '()) "ACTUAL"))
+      (setq done (get-prop-value (scrum-create-match (car developer) org-done-keywords) "ESTIMATED"))
+      (setq rem  (get-prop-value (scrum-create-match (car developer) org-not-done-keywords) "ESTIMATED"))
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
@@ -247,7 +254,7 @@
            (apply 'encode-time closestr)
            (string-to-number (org-entry-get (point) "ESTIMATED"))
            (org-entry-get (point) "TASKID"))))
-                                  "TODO=\"DONE\""))
+                (scrum-create-match nil org-done-keywords)))
     (while (<= day sprintlength)
       ;; (message "cdate %d %s" day (format-time-string "%Y-%m-%d %H:%M:%S" cdate))
       (setq cdate (time-add cdate (seconds-to-time 86400))) ;; increment current day
