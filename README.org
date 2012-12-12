@@ -129,6 +129,9 @@
      
 #+BEGIN_SRC org-mode
 
+#+BEGIN: block-update-board
+#+END:
+
 #+BEGIN: block-update-summary
 #+END:
 
@@ -170,9 +173,9 @@
 
    - scrum-taskid-prefix :: prefix added to taskids. defaults to "T"
    - scrum-board-format :: specify the format of the scrum board items as:
-     1. id
-     2. name
-     3. id. name
+       1. id
+       2. name
+       3. id. name
    - scrum-board-show-owners :: if true, show task owners on the scrum board
    - scrum-board-links :: if true, make the items in the scrum board links
 
