@@ -161,10 +161,10 @@
 
 ** scrum cards
 
-   scrum.el can generate a pdf (using texi2pdf) of task cards that can
-   be printed out and stuck on a physical scrum board.  each card
-   contains the task's id, owner, estimate, actual, and headline text.
-   the pdf will be named "scrum_cards.pdf"
+   scrum.el can generate a pdf (requires texi2pdf, and multirow.sty)
+   of task cards that can be printed out and stuck on a physical scrum
+   board.  each card contains the task's id, owner, estimate, actual,
+   and headline text.  the pdf will be named "scrum_cards.pdf"
 
 ** customization
 

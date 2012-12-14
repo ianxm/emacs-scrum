@@ -319,7 +319,11 @@
     (let (str)
       (setq str "
 \\documentclass[letterpaper,12pt]{article}
-\\usepackage[top=0.5in, bottom=0.5in, left=0.5in, right=0.5in]{geometry}
+\\usepackage[top=0.75in, bottom=0.75in, left=0.75in, right=0.75in]{geometry}
+\\setlength{\\columnsep}{0.75in}
+\\let\\TAB\\tabular
+\\renewcommand\\tabular{\\noindent\\TAB}
+\\usepackage{multirow}
 \\begin{document}
 \\pagestyle{empty}
 \\twocolumn
@@ -331,15 +335,15 @@
           (setq est (or (org-entry-get (point) "ESTIMATED") "\\_\\_\\_"))
           (setq hdl (nth 4 (org-heading-components)))
           (setq str (concat str (format "
+\\vspace{0.4in}
 \\filbreak
-\\begin{flushright}
-  id: %s\\\\
-  owner: %s\\\\
-  estimate: %s\\\\
-  actual: \\_\\_\\_
-\\end{flushright}
-%s\\\\
-" id owner est hdl)))))
+\\begin{tabular}{l r}
+  estimate: %s    & id: %s \\\\
+  actual: \\_\\_\\_ & owner: %s \\\\
+  \\hline
+  \\multicolumn{2}{p{\\columnwidth}}{%s} \\\\
+\\end{tabular}
+" est id owner hdl)))))
         "TODO<>\"\"")
       (setq str (concat str "\n\\end{document}\n"))
       (with-temp-file "scrum_cards.tex"
