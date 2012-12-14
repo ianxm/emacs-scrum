@@ -65,7 +65,7 @@
   5. get [[https://raw.github.com/ianxm/emacs-scrum/master/scrum.el][scrum.el]], add it to your emacs installation
   6. copy the template [[https://raw.github.com/ianxm/emacs-scrum/master/scrum-template.org.txt][scrum-template.org]] file to your system and
      open it in emacs
-  7. run "M-x scrum-update"
+  7. run "M-x scrum-update-all"
 
 * usage
 
@@ -149,7 +149,7 @@
 
 ** updating generated content
 
-   generated content can be updated by running "M-x scrum-update"
+   generated content can be updated by running "M-x scrum-update-all"
 
    alternatively, individual blocks can be updated by doing a "C-c
    C-c" with the point on a dynamic block "#+BEGIN" line.

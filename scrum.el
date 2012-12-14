@@ -61,7 +61,7 @@
   :group 'scrum
 )
 
-(defun get-developers ()
+(defun scrum-get-developers ()
   "get list of developer (name . wpd)"
   (let (ret)
     (setq ret (org-entry-properties (point) 'standard))
@@ -76,17 +76,17 @@
                       ret))
     ret))
 
-(defun get-prop-value (match prop)
+(defun scrum-get-prop-value (match prop)
   "sum property values for given match on TASKS tree"
   (let ((val 0)
         ret)
-    (setq ret (visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
+    (setq ret (scrum-visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
     (setq ret (remove-if (lambda (ii) (= (length ii) 0)) ret))
     (while ret 
       (setq val (+ val (string-to-number (pop ret)))))
     val))
 
-(defun get-finish-date (hours wpd)
+(defun scrum-get-finish-date (hours wpd)
   "count off the days to get the work done, skipping weekends"
   (let ((ret (current-time))
         (hoursleft hours)
@@ -98,7 +98,7 @@
           (setq hoursleft (- hoursleft wpd))))
     ret))
 
-(defun get-work-left (cdate closed tot)
+(defun scrum-get-work-left (cdate closed tot)
   "get the actual work todo for the date cdate"
   (let (toremove)
     (dolist (item closed)
@@ -108,7 +108,7 @@
         (push item toremove)))
     (cons toremove tot)))
 
-(defun draw-progress-bar (est done)
+(defun scrum-draw-progress-bar (est done)
   "draw a progress bar in the summary table"
   (let ((width 10)
         (blocksdone 5))
@@ -117,7 +117,7 @@
      (apply 'concat (make-list blocksdone "#"))
      (apply 'concat (make-list (- width blocksdone) "-")))))
 
-(defun visit-all-task-todos (fcn match)
+(defun scrum-visit-all-task-todos (fcn match)
   "call the given function in all tasks in the current tree"
   (save-excursion
     (let (tasks)
@@ -136,7 +136,7 @@
     (insert "| " (mapconcat 'identity todokwds "|") " |\n|-")
     (setq topleft (point))
     (setq getindx (lambda (ii) (- (length todokwds) (length (member ii todokwds)))))
-    (setq todos (visit-all-task-todos (lambda ()
+    (setq todos (scrum-visit-all-task-todos (lambda ()
         (let* ((todo (org-entry-get (point) "TODO"))
                (heading (nth 4 (org-heading-components)))
                (hdgbracket (string-match "\\[" heading))
@@ -193,23 +193,23 @@
         (act  0)                ;; actual hours spent
         (done 0)                ;; hours of estimates that are done
         (rem  0))               ;; hours of estimates that are left
-    (setq developers (car (org-map-entries 'get-developers "ID=\"TASKS\"")))
+    (setq developers (car (org-map-entries 'scrum-get-developers "ID=\"TASKS\"")))
     (if (= 0 (length developers))
         (error "no developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
     (dolist (developer developers)
-      (setq est  (get-prop-value (scrum-create-match (car developer) (append org-not-done-keywords org-done-keywords)) "ESTIMATED"))
-      (setq act  (get-prop-value (scrum-create-match (car developer) '()) "ACTUAL"))
-      (setq done (get-prop-value (scrum-create-match (car developer) org-done-keywords) "ESTIMATED"))
-      (setq rem  (get-prop-value (scrum-create-match (car developer) org-not-done-keywords) "ESTIMATED"))
+      (setq est  (scrum-get-prop-value (scrum-create-match (car developer) (append org-not-done-keywords org-done-keywords)) "ESTIMATED"))
+      (setq act  (scrum-get-prop-value (scrum-create-match (car developer) '()) "ACTUAL"))
+      (setq done (scrum-get-prop-value (scrum-create-match (car developer) org-done-keywords) "ESTIMATED"))
+      (setq rem  (scrum-get-prop-value (scrum-create-match (car developer) org-not-done-keywords) "ESTIMATED"))
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
               " | " (number-to-string act)
               " | " (number-to-string done)
               " | " (number-to-string rem)
-              " | " (format-time-string "%Y-%m-%d" (get-finish-date rem (cdr developer)))
-              " | " (draw-progress-bar est done)
+              " | " (format-time-string "%Y-%m-%d" (scrum-get-finish-date rem (cdr developer)))
+              " | " (scrum-draw-progress-bar est done)
               " |"))
     (org-ctrl-c-ctrl-c)))
 
@@ -225,7 +225,7 @@
         toremove              ;; list of (date est num) for each task that has been counted and can be removed
         cdate)                ;; current date for iterating
 
-    (setq tot (get-prop-value nil "ESTIMATED"))
+    (setq tot (scrum-get-prop-value nil "ESTIMATED"))
     (setq totleft tot)
     (org-map-entries (lambda () ;; look up start date and sprint length
                        (setq cdate (apply 'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART")))))
@@ -255,7 +255,7 @@
       (insert "\n| " (number-to-string day)
               " | " (format-time-string "%Y-%m-%d" cdate)
               " | " (if (time-less-p cdate today)
-                      (let ((ret (get-work-left cdate closed tot)))
+                      (let ((ret (scrum-get-work-left cdate closed tot)))
                         (setq toremove (car ret))                   ;; save list of completed tasks
                         (setq tot (cdr ret))                        ;; save new total
                         (if toremove                                ;; remove completed from master list
@@ -328,7 +328,7 @@
 \\pagestyle{empty}
 \\twocolumn
 \n")
-      (visit-all-task-todos (lambda ()
+      (scrum-visit-all-task-todos (lambda ()
         (let (id owner est hdl)
           (setq id (or (org-entry-get (point) "TASKID") "\\_\\_\\_"))
           (setq owner (or (org-entry-get (point) "OWNER") "\\_\\_\\_"))
@@ -351,7 +351,7 @@
       (shell-command "texi2pdf scrum_cards.tex" 
                      (get-buffer-create "*Standard output*")))))
 
-(defun scrum-update ()
+(defun scrum-update-all ()
   "update dynamic blocks in a scrum org file"
   (interactive)
   (save-excursion
