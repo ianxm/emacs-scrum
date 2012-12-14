@@ -138,21 +138,21 @@
     (setq getindx (lambda (ii) (- (length todokwds) (length (member ii todokwds)))))
     (setq todos (scrum-visit-all-task-todos (lambda ()
         (let* ((todo (org-entry-get (point) "TODO"))
-               (heading (nth 4 (org-heading-components)))
-               (hdgbracket (string-match "\\[" heading))
+               (hdg (nth 4 (org-heading-components)))
+               (bracket (string-match "\\[" hdg))               ;; index of bracket character
                (maxlen 30)
                owner label indx)
-          (if hdgbracket
-              (setq heading (substring heading 0 (1- hdgbracket))))
+          (if bracket
+              (setq hdg (substring hdg 0 (1- bracket))))
           (setq indx (funcall getindx todo))
           (setcar (nthcdr indx counts) (1+ (nth indx counts)))
           (setq colstr (concat "|" (make-string (1+ indx) ? ) "|"))
           (setq owner (org-entry-get (point) "OWNER"))
-          (setq heading (substring heading 0 (min (length heading) maxlen)))    ;; truncate heading
+          (setq hdg (substring hdg 0 (min (length hdg) maxlen)))                ;; truncate heading
           (cond                                                                 ;; scrum board label
            ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
-           ((= 2 scrum-board-format) (setq label heading))
-           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " heading))))
+           ((= 2 scrum-board-format) (setq label hdg))
+           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " hdg))))
           (if scrum-board-show-owners                                           ;; add owner to label
               (setq  label (concat label " (" owner ")")))
           (if scrum-board-links
@@ -329,11 +329,14 @@
 \\twocolumn
 \n")
       (scrum-visit-all-task-todos (lambda ()
-        (let (id owner est hdl)
+        (let* ((hdg (nth 4 (org-heading-components)))
+               (bracket (string-match "\\[" hdg))               ;; index of bracket character
+               id owner est)
           (setq id (or (org-entry-get (point) "TASKID") "\\_\\_\\_"))
           (setq owner (or (org-entry-get (point) "OWNER") "\\_\\_\\_"))
           (setq est (or (org-entry-get (point) "ESTIMATED") "\\_\\_\\_"))
-          (setq hdl (nth 4 (org-heading-components)))
+          (if bracket
+              (setq hdg (substring hdg 0 (1- bracket))))
           (setq str (concat str (format "
 \\vspace{0.4in}
 \\filbreak
@@ -343,7 +346,7 @@
   \\hline
   \\multicolumn{2}{p{\\columnwidth}}{%s} \\\\
 \\end{tabular}
-" est id owner hdl)))))
+" est id owner hdg)))))
         "TODO<>\"\"")
       (setq str (concat str "\n\\end{document}\n"))
       (with-temp-file "scrum_cards.tex"
