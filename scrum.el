@@ -274,11 +274,26 @@
   "generate burndown chart"
   (save-excursion
     (let ((fname "burndown.plt")
-          pt found)
+          pt                    ;; the point
+          found                 ;; true if plot block is found
+          sprintlength)         ;; calendar days in sprint
       (goto-char (point-min))
-      (setq found (re-search-forward "#\\+PLOT: title:\"Burndown\".*" nil t))
+      (setq found (re-search-forward "#\\+PLOT: .*title:\"Burndown\"" nil t))
       (if (not found)
           (error "PLOT block not found"))
+      (org-map-entries (lambda () ;; look up start date and sprint length
+                         (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
+                       "ID=\"TASKS\"")
+      (if (null sprintlength)
+          (error "couldn't find node with ID=\"TASKS\" containing \"SPRINTLENGTH\" and \"SPRINTSTART\" properties"))
+      (save-excursion
+        (goto-char (point-min))
+        (re-search-forward "#\\+PLOT: .*title:\"Burndown\"")
+        (search-forward "set:\"xrange ")
+        (forward-char 3)
+        (while (not (looking-at "]"))
+          (delete-char 1))
+        (insert (number-to-string sprintlength)))
       (org-plot/gnuplot)
       (when (file-exists-p fname)
         (goto-char (point-min))
