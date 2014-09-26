@@ -141,7 +141,7 @@
                (hdg (nth 4 (org-heading-components)))
                (bracket (string-match "\\[" hdg))               ;; index of bracket character
                (maxlen 30)
-               owner label indx)
+               owner label indx priority)
           (if bracket
               (setq hdg (substring hdg 0 (1- bracket))))
           (setq indx (funcall getindx todo))
@@ -149,12 +149,14 @@
           (setq colstr (concat "|" (make-string (1+ indx) ? ) "|"))
           (setq owner (org-entry-get (point) "OWNER"))
           (setq hdg (substring hdg 0 (min (length hdg) maxlen)))                ;; truncate heading
+          (if (nth 3 (org-heading-components))                                  ;; lookup priority
+              (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] ")))
           (cond                                                                 ;; scrum board label
            ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
-           ((= 2 scrum-board-format) (setq label hdg))
-           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " hdg))))
+           ((= 2 scrum-board-format) (setq label priority hdg))
+           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg))))
           (if scrum-board-show-owners                                           ;; add owner to label
-              (setq  label (concat label " (" owner ")")))
+              (setq  label (concat label " (" owner ") ")))
           (if scrum-board-links
               (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
           (cons label colstr)))
