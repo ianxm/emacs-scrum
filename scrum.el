@@ -141,7 +141,8 @@
                (hdg (nth 4 (org-heading-components)))
                (bracket (string-match "\\[" hdg))               ;; index of bracket character
                (maxlen 30)
-               owner label indx priority)
+               (priority "[#Z] ")                               ;; default to lowest priority
+               owner label indx)
           (if bracket
               (setq hdg (substring hdg 0 (1- bracket))))
           (setq indx (funcall getindx todo))
@@ -153,7 +154,7 @@
               (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] ")))
           (cond                                                                 ;; scrum board label
            ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
-           ((= 2 scrum-board-format) (setq label priority hdg))
+           ((= 2 scrum-board-format) (setq label (concat priority hdg)))
            ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg))))
           (if scrum-board-show-owners                                           ;; add owner to label
               (setq  label (concat label " (" owner ") ")))
@@ -169,6 +170,11 @@
       (goto-char topleft)                 ;; lay out empty table rows
       (dotimes (ii (reduce (lambda (a b) (max a b)) counts))
         (insert (concat "\n" newrow))))   ;; different number of spaces for each col
+
+                                          ;; sort by priority
+    (setq todos (sort todos (lambda (a b) (string< (substring (car a) 4) (substring (car b) 4)))))
+    (dolist (item todos)
+      (setcar item (replace-regexp-in-string "\\[#Z\\] " "" (car item))))
 
     (dolist (item todos)                  ;; fill in table
       (when item

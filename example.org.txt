@@ -7,56 +7,56 @@
 * REPORTS
 ** SCRUM BOARD
 #+BEGIN: block-update-board
-| NOT STARTED                   | IN PROGRESS          | DONE                        |
-|-------------------------------+----------------------+-----------------------------|
-| T11. add license to src files | T12. write doc (wil) | T02. learn org mode         |
-| T13. post to github           |                      | T03. set up project folder  |
-|                               |                      | T04. write example org file |
-|                               |                      | T05. draw up reports ui's   |
-|                               |                      | T06. create task list table |
-|                               |                      | T07. create summary table   |
-|                               |                      | T08. create burndown list   |
-|                               |                      | T09. create burndown chart  |
-|                               |                      | T10. create scrum board     |
+| TODO                                | STARTED                   | DONE                                         | DEFERRED                    |
+|-------------------------------------+---------------------------+----------------------------------------------+-----------------------------|
+| T11. add license to src files (wil) | T12. [#C] write doc (wil) | T07. [#A] create summary table (kevin)       | T01. [#B] learn elisp (ian) |
+| T13. post to github (kevin ian)     |                           | T06. [#A] create task list table (wil kevin) |                             |
+|                                     |                           | T05. [#A] draw up reports ui's (wil)         |                             |
+|                                     |                           | T03. [#A] set up project folder (kevin)      |                             |
+|                                     |                           | T04. [#A] write example org file (wil)       |                             |
+|                                     |                           | T08. [#B] create burndown list (ian)         |                             |
+|                                     |                           | T10. [#B] create scrum board (ian)           |                             |
+|                                     |                           | T09. [#C] create burndown chart (ian wil)    |                             |
+|                                     |                           | T02. learn org mode (ian)                    |                             |
 #+END:
 ** DEVELOPER SUMMARY
 #+BEGIN: block-update-summary
 | NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |-------+-----------+--------+------+-----------+--------------+------------|
-| ian   |        28 |     38 |   28 |         0 |   2012-12-08 | ########## |
-| kevin |         7 |      9 |    6 |         1 |   2012-12-10 | #########- |
-| wil   |        17 |     10 |   13 |         4 |   2012-12-11 | ########-- |
+| ian   |        32 |     38 |   32 |         0 |   2014-09-26 | ########## |
+| kevin |         7 |      9 |    6 |         1 |   2014-09-29 | #########- |
+| wil   |        17 |     10 |   13 |         4 |   2014-09-30 | ########-- |
 #+END:
 ** BURNDOWN CHART
 #+BEGIN: block-update-graph
 '
 '                                    Burndown
 '
-'  60 +-----------+----------+-----------+-----------+----------+-----------+
-'     |     ###                                               ACTUAL ###### |
-'     |        ##                                              IDEAL ...... |
-'  50 +     .....#                                                          +
-'     |           ####.                                                     |
-'     |               #.....                                                |
-'  40 +                ######                                               +
-'     |                      #########                                      |
-'     |                            ...#.                                    |
-'  30 +                                ##                                   +
-'     |                                  ......                             |
-'     |                                  ###   ......                       |
-'  20 +                                     ##       ....                   +
-'     |                                       #          .                  |
-'     |                                        #################            |
-'  10 +                                                         #############
-'     |                                                              .      |
-'     |                                                               ......|
-'   0 +-----------+----------+-----------+-----------+----------+-----------.
-'     0           2          4           6           8          10          12
+'  60 +-----+------------+------------+------------+-----------+------------+
+'     ###                                                     ACTUAL ###### |
+'     |  ##                                                    IDEAL ...... |
+'  50 .....#                                                                +
+'     |     ######.                                                         |
+'     |           #.....                                                    |
+'  40 +            ######                                                   +
+'     |                  ##########                                         |
+'     |                        ....##                                       |
+'  30 +                              #                                      +
+'     |                               ###...                                |
+'     |                                  ## .......                         |
+'  20 +                                    #       .....                    +
+'     |                                     ##################              |
+'     |                                                  .....#             |
+'  10 +                                                        ##############
+'     |                                                               ..... |
+'     |                                                                    .|
+'   0 +-----+------------+------------+------------+-----------+------------.
+'           2            4            6            8           10           12
 '
 '
 #+END:
 ** BURNDOWN LIST
-#+PLOT: title:"Burndown" ind:1 deps:(3 4) set:"term dumb" set:"xrange [1:]" set:"xtics scale 0.5" set:"ytics scale 0.5" file:"burndown.plt"
+#+PLOT: title:"Burndown" ind:1 deps:(3 4) set:"term dumb" set:"xrange [1:12]" set:"xtics scale 0.5" set:"ytics scale 0.5" file:"burndown.plt"
 #+BEGIN: block-update-burndown
 | DAY |       DATE | ACTUAL | IDEAL | TASKS COMPLETED |
 |-----+------------+--------+-------+-----------------|
@@ -81,7 +81,7 @@
 |----------------------------------+--------+-----------+----------+----------+-----------+--------|
 | ** RESEARCH                      |        |           |          |          |         8 |     14 |
 | *** learn elisp                  | T01    | ian       | B        | DEFERRED |         4 |     10 |
-| *** learn org mode               | T02    | ian       | B        | DONE     |         4 |      4 |
+| *** learn org mode               | T02    | ian       |          | DONE     |         4 |      4 |
 |----------------------------------+--------+-----------+----------+----------+-----------+--------|
 | ** ENVIRONMENT                   |        |           |          |          |         4 |      4 |
 | *** set up project folder [3/3]  | T03    | kevin     | A        | DONE     |         1 |      1 |
@@ -98,9 +98,9 @@
 | *** create scrum board           | T10    | ian       | B        | DONE     |         6 |      8 |
 |----------------------------------+--------+-----------+----------+----------+-----------+--------|
 | ** PUBLISH                       |        |           |          |          |         5 |      1 |
-| *** add license to src files     | T11    | wil       | C        | TODO     |         1 |        |
+| *** add license to src files     | T11    | wil       |          | TODO     |         1 |        |
 | *** write doc                    | T12    | wil       | C        | STARTED  |         3 |      1 |
-| *** post to github [0/2]         | T13    | kevin ian | B        | TODO     |         1 |        |
+| *** post to github [0/2]         | T13    | kevin ian |          | TODO     |         1 |        |
 #+END:
 * TASKS 
   :PROPERTIES:
@@ -122,7 +122,7 @@
     :END:
     read [[http://steve-yegge.blogspot.com/2008/01/emergency-elisp.html][stevey's tutorial]]
     skim the [[http://www.gnu.org/software/emacs/manual/html_node/elisp/][elisp reference]]
-*** DONE [#B] learn org mode
+*** DONE learn org mode
     CLOSED: [2012-11-27 Tue 18:24]
     :PROPERTIES:
     :ESTIMATED: 4
@@ -216,7 +216,7 @@
     the tasks, where each task in the table links to that task in the
     outline.
 ** PUBLISH
-*** TODO [#C] add license to src files
+*** TODO add license to src files
     :PROPERTIES:
     :OWNER:    wil
     :TASKID:   T11
@@ -231,7 +231,7 @@
     :ACTUAL:   1
     :END:
     write a readme
-*** TODO [#B] post to github [0/2]
+*** TODO post to github [0/2]
     :PROPERTIES:
     :OWNER:    kevin ian
     :TASKID:   T13
