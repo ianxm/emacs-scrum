@@ -68,6 +68,7 @@
   6. copy the template [[https://raw.github.com/ianxm/emacs-scrum/master/scrum-template.org.txt][scrum-template.org]] file to your system and
      open it in emacs
   7. run "M-x scrum-update-all"
+  8. you can export a report using one of the org-export-as-* commands
 
 * usage
 

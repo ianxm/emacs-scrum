@@ -73,7 +73,7 @@
 '
 #+END:
 ** BURNDOWN LIST
-#+PLOT: title:"Burndown" ind:1 deps:(3 4) set:"term dumb" set:"xtics scale 0.5" set:"ytics scale 0.5" file:"burndown.plt"
+#+PLOT: title:"Burndown" ind:1 deps:(3 4) set:"term dumb" set:"xrange [0:]" set:"xtics scale 0.5" set:"ytics scale 0.5" file:"burndown.plt"
 #+BEGIN: block-update-burndown
 | DAY |       DATE | ACTUAL | IDEAL | TASKS COMPLETED |
 |-----+------------+--------+-------+-----------------|
