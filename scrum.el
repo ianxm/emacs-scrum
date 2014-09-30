@@ -172,7 +172,7 @@
         (insert (concat "\n" newrow))))   ;; different number of spaces for each col
 
                                           ;; sort by priority
-    (setq todos (sort todos (lambda (a b) (string< (substring (car a) 4) (substring (car b) 4)))))
+    (setq todos (sort todos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
     (dolist (item todos)
       (setcar item (replace-regexp-in-string "\\[#Z\\] " "" (car item))))
 
