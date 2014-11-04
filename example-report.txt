@@ -2,7 +2,7 @@
                      ============================
 
 Author: ian
-Date: 2014-09-26 08:26:23 EDT
+Date: 2014-11-03 19:06:56 EST
 
 
 Table of Contents
@@ -61,31 +61,30 @@ Table of Contents
 
 1.3 BURNDOWN CHART 
 ===================
-'
-'                                    Burndown
-'
-'  60 +-----+------------+------------+------------+-----------+------------+
-'     ###                                                     ACTUAL ###### |
-'     |  ##                                                    IDEAL ...... |
-'  50 .....#                                                                +
-'     |     ######.                                                         |
-'     |           #.....                                                    |
-'  40 +            ######                                                   +
-'     |                  ##########                                         |
-'     |                        ....##                                       |
-'  30 +                              #                                      +
-'     |                               ###...                                |
-'     |                                  ## .......                         |
-'  20 +                                    #       .....                    +
-'     |                                     ##################              |
-'     |                                                  .....#             |
-'  10 +                                                        ##############
-'     |                                                               ..... |
-'     |                                                                    .|
-'   0 +-----+------------+------------+------------+-----------+------------.
-'           2            4            6            8           10           12
-'
-'
+
+                                   Burndown
+
+ 60 +-----+------------+------------+------------+-----------+------------+
+    ###                                                     ACTUAL ###### |
+    |  ##                                                    IDEAL ...... |
+ 50 .....#                                                                +
+    |     ######.                                                         |
+    |           #.....                                                    |
+ 40 +            ######                                                   +
+    |                  ##########                                         |
+    |                        ....##                                       |
+ 30 +                              #                                      +
+    |                               ###...                                |
+    |                                  ## .......                         |
+ 20 +                                    #       .....                    +
+    |                                     ##################              |
+    |                                                  .....#             |
+ 10 +                                                        ##############
+    |                                                               ..... |
+    |                                                                    .|
+  0 +-----+------------+------------+------------+-----------+------------.
+          2            4            6            8           10           12
+
 
 1.4 BURNDOWN LIST 
 ==================
@@ -108,30 +107,30 @@ Table of Contents
 ==============
   ITEM                               TASKID   OWNER       PRIORITY   TODO       ESTIMATED   ACTUAL  
  ----------------------------------+--------+-----------+----------+----------+-----------+--------
-    TASKS                                                                              56       57  
+  * TASKS                                                                              56       57  
  ----------------------------------+--------+-----------+----------+----------+-----------+--------
-     RESEARCH                                                                           8       14  
-      learn elisp                    T01      ian         B          DEFERRED           4       10  
-      learn org mode                 T02      ian                    DONE               4        4  
+  ** RESEARCH                                                                           8       14  
+  *** learn elisp                    T01      ian         B          DEFERRED           4       10  
+  *** learn org mode                 T02      ian                    DONE               4        4  
  ----------------------------------+--------+-----------+----------+----------+-----------+--------
-     ENVIRONMENT                                                                        4        4  
-      set up project folder [3/3]    T03      kevin       A          DONE               1        1  
-      write example org file         T04      wil         A          DONE               3        3  
+  ** ENVIRONMENT                                                                        4        4  
+  *** set up project folder [3/3]    T03      kevin       A          DONE               1        1  
+  *** write example org file         T04      wil         A          DONE               3        3  
  ----------------------------------+--------+-----------+----------+----------+-----------+--------
-     DESIGN                                                                             4        3  
-      draw up reports ui's           T05      wil         A          DONE               4        3  
+  ** DESIGN                                                                             4        3  
+  *** draw up reports ui's           T05      wil         A          DONE               4        3  
  ----------------------------------+--------+-----------+----------+----------+-----------+--------
-     CODING                                                                            35       35  
-      create task list table [2/2]   T06      wil kevin   A          DONE               6        3  
-      create summary table           T07      kevin       A          DONE               5        8  
-      create burndown list           T08      ian         B          DONE               8       12  
-      create burndown chart          T09      ian wil     C          DONE              10        4  
-      create scrum board             T10      ian         B          DONE               6        8  
+  ** CODING                                                                            35       35  
+  *** create task list table [2/2]   T06      wil kevin   A          DONE               6        3  
+  *** create summary table           T07      kevin       A          DONE               5        8  
+  *** create burndown list           T08      ian         B          DONE               8       12  
+  *** create burndown chart          T09      ian wil     C          DONE              10        4  
+  *** create scrum board             T10      ian         B          DONE               6        8  
  ----------------------------------+--------+-----------+----------+----------+-----------+--------
-     PUBLISH                                                                            5        1  
-      add license to src files       T11      wil                    TODO               1           
-      write doc                      T12      wil         C          STARTED            3        1  
-      post to github [0/2]           T13      kevin ian              TODO               1           
+  ** PUBLISH                                                                            5        1  
+  *** add license to src files       T11      wil                    TODO               1           
+  *** write doc                      T12      wil         C          STARTED            3        1  
+  *** post to github [0/2]           T13      kevin ian              TODO               1           
 
 2 TASKS 
 --------

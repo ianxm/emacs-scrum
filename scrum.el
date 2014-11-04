@@ -312,7 +312,7 @@
         (delete-file fname)                         ;; del temp file
         (delete-char 1)                             ;; form feed
         (while (not (looking-at "#\\+END"))
-          (insert "'")
+          (insert ":")
           (forward-line 1))
         (save-restriction                           ;; change ideal to .
           (narrow-to-region pt (point))

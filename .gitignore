@@ -1,1 +1,4 @@
 *.elc
+*.aux
+*.log
+*.tex
