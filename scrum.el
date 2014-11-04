@@ -330,10 +330,11 @@
   (interactive)
   (save-excursion
     (let ((ii 1))
-      (org-map-entries (lambda ()
+      (scrum-visit-all-task-todos (lambda ()
                          (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
                          (setq ii (1+ ii)))
-                       "TODO<>\"\"" 'tree))))
+                       "TODO<>\"\""))))
+
 
 (defun scrum-generate-task-cards ()
   "generate scrum board task cards in latex format.  writes to \"scrum_cards.pdf\""
