@@ -9,11 +9,11 @@
 #+BEGIN: block-update-board
 | TODO                                | STARTED                   | DONE                                         | DEFERRED                    |
 |-------------------------------------+---------------------------+----------------------------------------------+-----------------------------|
-| T11. add license to src files (wil) | T12. [#C] write doc (wil) | T07. [#A] create summary table (kevin)       | T01. [#B] learn elisp (ian) |
-| T13. post to github (kevin ian)     |                           | T06. [#A] create task list table (wil kevin) |                             |
+| T11. add license to src files (wil) | T12. [#C] write doc (wil) | T03. [#A] set up project folder (kevin)      | T01. [#B] learn elisp (ian) |
+| T13. post to github (kevin ian)     |                           | T04. [#A] write example org file (wil)       |                             |
 |                                     |                           | T05. [#A] draw up reports ui's (wil)         |                             |
-|                                     |                           | T03. [#A] set up project folder (kevin)      |                             |
-|                                     |                           | T04. [#A] write example org file (wil)       |                             |
+|                                     |                           | T06. [#A] create task list table (wil kevin) |                             |
+|                                     |                           | T07. [#A] create summary table (kevin)       |                             |
 |                                     |                           | T08. [#B] create burndown list (ian)         |                             |
 |                                     |                           | T10. [#B] create scrum board (ian)           |                             |
 |                                     |                           | T09. [#C] create burndown chart (ian wil)    |                             |
@@ -23,9 +23,9 @@
 #+BEGIN: block-update-summary
 | NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |-------+-----------+--------+------+-----------+--------------+------------|
-| ian   |        32 |     38 |   32 |         0 |   2014-09-26 | ########## |
-| kevin |         7 |      9 |    6 |         1 |   2014-09-29 | #########- |
-| wil   |        17 |     10 |   13 |         4 |   2014-09-30 | ########-- |
+| ian   |        32 |     38 |   32 |         0 |   2014-11-03 | ########## |
+| kevin |         7 |      9 |    6 |         1 |   2014-11-04 | #########- |
+| wil   |        17 |     10 |   13 |         4 |   2014-11-05 | ########-- |
 #+END:
 ** BURNDOWN CHART
 #+BEGIN: block-update-graph
@@ -106,7 +106,7 @@
   :PROPERTIES:
   :ID:       TASKS
   :SPRINTLENGTH: 12
-  :SPRINTSTART: <2012-11-25 Sun>
+  :SPRINTSTART: <2012-11-26 Mon>
   :wpd-ian:      3
   :wpd-kevin:    4
   :wpd-wil:      3.5
@@ -129,7 +129,7 @@
     :ACTUAL:   4
     :OWNER:    ian
     :TASKID:   T02
-    :END:
+     :END:
     read the [[http://orgmode.org/org.html][org mode reference]]
 ** ENVIRONMENT
 *** DONE [#A] set up project folder [3/3]
@@ -180,9 +180,9 @@
     CLOSED: [2012-12-01 Sat 12:48]
     :PROPERTIES:
     :OWNER:    kevin
-    :TASKID:   T07
     :ESTIMATED: 5
     :ACTUAL:   8
+    :TASKID:   T07
     :END:
     summary table should show how busy each developer is, and how much
     progress they are making.
@@ -190,18 +190,18 @@
     CLOSED: [2012-12-01 Sat 15:48]
     :PROPERTIES:
     :OWNER:    ian
-    :TASKID:   T08
     :ESTIMATED: 8
     :ACTUAL:   12
+    :TASKID:   T08
     :END:
     the burndown list is mainly to lay out the data used to draw the burndown chart.
 *** DONE [#C] create burndown chart
     CLOSED: [2012-12-02 Sun 16:48]
     :PROPERTIES:
     :OWNER:    ian wil
-    :TASKID:   T09
     :ESTIMATED: 10
     :ACTUAL:   4
+    :TASKID:   T09
     :END:
     generate an ascii burndown chart via gnuplot.
 *** DONE [#B] create scrum board
@@ -219,24 +219,24 @@
 *** TODO add license to src files
     :PROPERTIES:
     :OWNER:    wil
-    :TASKID:   T11
     :ESTIMATED: 1
     :ACTUAL: 
+    :TASKID:   T11
     :END:
 *** STARTED [#C] write doc
     :PROPERTIES:
     :OWNER:    wil
-    :TASKID:   T12
     :ESTIMATED: 3
     :ACTUAL:   1
+    :TASKID:   T12
     :END:
     write a readme
 *** TODO post to github [0/2]
     :PROPERTIES:
     :OWNER:    kevin ian
-    :TASKID:   T13
     :ESTIMATED: 1
     :ACTUAL: 
+    :TASKID:   T13
     :END:
     - [ ] create a project
     - [ ] push repo

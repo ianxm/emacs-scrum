@@ -236,7 +236,8 @@
     (setq tot (scrum-get-prop-value nil "ESTIMATED"))
     (setq totleft tot)
     (org-map-entries (lambda () ;; look up start date and sprint length
-                       (setq cdate (apply 'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART")))))
+                       (setq cdate (time-subtract (apply 'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART"))))
+                                             (seconds-to-time 86400))) ;; day before sprint start
                        (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
                      "ID=\"TASKS\"")
     (if (or (null cdate) (null sprintlength))
