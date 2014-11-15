@@ -7,25 +7,25 @@
 * REPORTS
 ** SCRUM BOARD
 #+BEGIN: block-update-board
-| TODO                                | STARTED                   | DONE                                         | DEFERRED                    |
-|-------------------------------------+---------------------------+----------------------------------------------+-----------------------------|
-| T11. add license to src files (wil) | T12. [#C] write doc (wil) | T03. [#A] set up project folder (kevin)      | T01. [#B] learn elisp (ian) |
-| T13. post to github (kevin ian)     |                           | T04. [#A] write example org file (wil)       |                             |
-|                                     |                           | T05. [#A] draw up reports ui's (wil)         |                             |
-|                                     |                           | T06. [#A] create task list table (wil kevin) |                             |
-|                                     |                           | T07. [#A] create summary table (kevin)       |                             |
-|                                     |                           | T08. [#B] create burndown list (ian)         |                             |
-|                                     |                           | T10. [#B] create scrum board (ian)           |                             |
-|                                     |                           | T09. [#C] create burndown chart (ian wil)    |                             |
-|                                     |                           | T02. learn org mode (ian)                    |                             |
+| TODO                                | STARTED                   | DONE                                                    | DEFERRED                               |
+|-------------------------------------+---------------------------+---------------------------------------------------------+----------------------------------------|
+| T11. add license to src files (wil) | T12. [#C] write doc (wil) | T10. [#B] create scrum board (ian 2012-12-05)           | T01. [#B] learn elisp (ian 2012-12-08) |
+| T13. post to github (kevin ian)     |                           | T09. [#C] create burndown chart (ian wil 2012-12-02)    |                                        |
+|                                     |                           | T07. [#A] create summary table (kevin 2012-12-01)       |                                        |
+|                                     |                           | T08. [#B] create burndown list (ian 2012-12-01)         |                                        |
+|                                     |                           | T04. [#A] write example org file (wil 2012-11-29)       |                                        |
+|                                     |                           | T03. [#A] set up project folder (kevin 2012-11-28)      |                                        |
+|                                     |                           | T06. [#A] create task list table (wil kevin 2012-11-28) |                                        |
+|                                     |                           | T02. learn org mode (ian 2012-11-27)                    |                                        |
+|                                     |                           | T05. [#A] draw up reports ui's (wil 2012-11-27)         |                                        |
 #+END:
 ** DEVELOPER SUMMARY
 #+BEGIN: block-update-summary
 | NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |-------+-----------+--------+------+-----------+--------------+------------|
-| ian   |        32 |     38 |   32 |         0 |   2014-11-03 | ########## |
-| kevin |         7 |      9 |    6 |         1 |   2014-11-04 | #########- |
-| wil   |        17 |     10 |   13 |         4 |   2014-11-05 | ########-- |
+| ian   |        32 |     38 |   32 |         0 |   2014-11-14 | ########## |
+| kevin |         7 |      9 |    6 |         1 |   2014-11-17 | #########- |
+| wil   |        17 |     10 |   13 |         4 |   2014-11-18 | ########-- |
 #+END:
 ** BURNDOWN CHART
 #+BEGIN: block-update-graph

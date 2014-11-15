@@ -1,8 +1,8 @@
 ;;; scrum.el --- Helper functions for scrum planning and reporting
 
-;; Copyright (C) 2012 Ian Martins
+;; Copyright (C) 2012-2014 Ian Martins
 
-;; Version: 0.0.4
+;; Version: 0.0.5
 ;; Keywords: scrum burndown
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: http://github.com/ianxm/emacs-scrum
@@ -49,18 +49,14 @@
 (defcustom scrum-board-format 3
   "specify the format of the scrum board items
 1. \"id\"
-2. \"name\"
-3. \"id. name\"
+2. \"priority task (closedate)\"
+3. \"id. priority task (closedate)\"
+4. \"id. owner (closedate)\"
+5. \"id. priority task (owner closedate)\"
 "
   :type 'integer
   :group 'scrum
 )
-(defcustom scrum-board-show-owners nil
-  "if true, show task owners on the scrum board"
-  :type 'boolean
-  :group 'scrum
-)
-
 (defun scrum-get-developers ()
   "get list of developer (name . wpd)"
   (let (ret)
@@ -129,7 +125,7 @@
 (defun org-dblock-write:block-update-board (params)
   (interactive)
   "generate scrum board"
-  (let* ((todos)                 ;; list of (link . colstr)
+  (let* (todos                  ;; all todos. list of (link . colstr)
         (todokwds (append org-not-done-keywords org-done-keywords)) ;; list of all todo keywords
         (counts (make-list (length todokwds) 0)) ;; count for each todo kwd
         colstr topleft getindx)
@@ -140,8 +136,10 @@
         (let* ((todo (org-entry-get (point) "TODO"))
                (hdg (nth 4 (org-heading-components)))
                (bracket (string-match "\\[" hdg))               ;; index of bracket character
-               (maxlen 30)
+               (maxlen 30)                                      ;; max length of scrum board task name
                (priority "[#Z] ")                               ;; default to lowest priority
+               (closedate "")                                   ;; close date without parens
+               (closedateparens "")                             ;; close date with parens
                owner label indx)
           (if bracket
               (setq hdg (substring hdg 0 (1- bracket))))
@@ -152,16 +150,25 @@
           (setq hdg (substring hdg 0 (min (length hdg) maxlen)))                ;; truncate heading
           (if (nth 3 (org-heading-components))                                  ;; lookup priority
               (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] ")))
+          (let ((n 0)                                                           ;; get close date
+                closetime)
+            (setq closetime (org-entry-get (point) "CLOSED"))
+            (unless (null closetime)
+              (setq closestr (parse-time-string closetime))
+              (setq closestr (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closestr)) ;; clear time of day
+              (setq closedate (format-time-string " %Y-%m-%d" (apply 'encode-time closestr)))
+              (setq closedateparens (format-time-string " (%Y-%m-%d)" (apply 'encode-time closestr)))))
           (cond                                                                 ;; scrum board label
            ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
-           ((= 2 scrum-board-format) (setq label (concat priority hdg)))
-           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg))))
-          (if scrum-board-show-owners                                           ;; add owner to label
-              (setq  label (concat label " (" owner ") ")))
+           ((= 2 scrum-board-format) (setq label (concat priority hdg " " closedateparens)))
+           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens)))
+           ((= 4 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " owner closedateparens)))
+           ((= 5 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg " (" owner closedate ")"))))
           (if scrum-board-links
               (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
           (cons label colstr)))
                 "TODO<>\"\""))
+
     (let (range                           ;; range will be '(1 2 3..)
           newrow)                         ;; newrow will be "| |  |   |..."
       (dotimes (val (length counts) range)
@@ -171,13 +178,20 @@
       (dotimes (ii (reduce (lambda (a b) (max a b)) counts))
         (insert (concat "\n" newrow))))   ;; different number of spaces for each col
 
-                                          ;; sort by priority
-    (setq todos (sort todos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
-    (dolist (item todos)
-      (setcar item (replace-regexp-in-string "\\[#Z\\] " "" (car item))))
+    (let (opentodos                       ;; todos that arent closed
+          closedtodos)                    ;; todos that are closed
+      (setq closedtodos (remove-if-not (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
+      (setq opentodos (remove-if (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
+                                          ;; sort closed tasks by date closed
+      (setq closedtodos (sort closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
+                                                                 (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
+                                          ;; sort open tasks by priority
+      (setq opentodos (sort opentodos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
+      (setq todos (append opentodos closedtodos)))
 
     (dolist (item todos)                  ;; fill in table
       (when item
+        (setcar item (replace-regexp-in-string "\\[#Z\\] " "" (car item)))
         (goto-char topleft)
         (search-forward (cdr item))       ;; find col based on number of spaces
         (forward-char -1)
@@ -252,6 +266,7 @@
               (error (concat "\"" (nth 4 (org-heading-components)) "\" is marked DONE but doesn't have a CLOSED date")))
           (setq closestr (parse-time-string closetime))
           (setq closestr (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closestr)) ;; clear time of day
+          ;;(message "%s" (format-time-string "%Y-%m-%d" (apply 'encode-time closestr)))
           (list
            (apply 'encode-time closestr)
            (string-to-number (org-entry-get (point) "ESTIMATED"))
