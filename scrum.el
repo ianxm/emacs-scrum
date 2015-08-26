@@ -64,10 +64,10 @@
     (setq ret (remove-if (lambda (ii)                  ;; filter out non-developer properties
                            (or 
                             (< (length (car ii)) 5)
-                            (not (string= (substring (car ii) 0 4) "wpd-"))))
+                            (not (string= (upcase (substring (car ii) 0 4)) "WPD-"))))
                          ret))
     (setq ret (mapcar (function (lambda (ii) (cons     ;; remove the 'wpd-' prefix to get the name
-                                              (substring (car ii) 4 (length (car ii)))
+                                              (capitalize (substring (car ii) 4 (length (car ii))))
                                               (string-to-number (cdr ii)))))
                       ret))
     ret))
