@@ -227,7 +227,7 @@
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
-              " | " (number-to-string act)
+              " | " (format "%.2f" act)
               " | " (number-to-string done)
               " | " (number-to-string rem)
               " | " (format-time-string "%Y-%m-%d" (scrum-get-finish-date rem (cdr developer)))
