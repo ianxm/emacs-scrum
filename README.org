@@ -63,7 +63,7 @@
   2. add org-mode to your emacs installation (if you don't already
      have it.  you probably do)
   3. install gnuplot
-  4. get [[https://raw.github.com/rudi/gnuplot-el/master/gnuplot.el][gnuplot.el]], add it to your emacs installation
+  4. get [[https://raw.githubusercontent.com/bruceravel/gnuplot-mode/master/gnuplot.el][gnuplot.el]], add it to your emacs installation
   5. get [[https://raw.github.com/ianxm/emacs-scrum/master/org-scrum.el][org-scrum.el]], add it to your emacs installation
   6. copy the template [[https://raw.github.com/ianxm/emacs-scrum/master/scrum-template.org.txt][scrum-template.org]] file to your system and
      open it in emacs
