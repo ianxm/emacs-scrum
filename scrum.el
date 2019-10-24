@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'seq)
 (require 'gnuplot)
 (require 'org)
 
@@ -60,10 +60,10 @@
   "Get list of developers as (name . wpd)."
   (let (ret)
     (setq ret (org-entry-properties (point) 'standard))
-    (setq ret (remove-if (lambda (ii)                  ; filter out non-developer properties
-                           (or
-                            (< (length (car ii)) 5)
-                            (not (string= (upcase (substring (car ii) 0 4)) "WPD-"))))
+    (setq ret (seq-filter (lambda (ii)                  ; filter out non-developer properties
+                           (and
+                            (>= (length (car ii)) 5)
+                            (string= (upcase (substring (car ii) 0 4)) "WPD-")))
                          ret))
     (setq ret (mapcar (function (lambda (ii) (cons     ; remove the 'wpd-' prefix to get the name
                                               (capitalize (substring (car ii) 4 (length (car ii))))
@@ -76,7 +76,7 @@
   (let ((val 0)
         ret)
     (setq ret (scrum--visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
-    (setq ret (remove-if (lambda (ii) (= (length ii) 0)) ret))
+    (setq ret (seq-filter (lambda (ii) (> (length ii) 0)) ret))
     (while ret
       (setq val (+ val (string-to-number (pop ret)))))
     val))
@@ -174,13 +174,13 @@
         (setq range (cons (- (length counts) val) range)))
       (setq newrow (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|"))
       (goto-char topleft)                 ; lay out empty table rows
-      (dotimes (ii (reduce (lambda (a b) (max a b)) counts))
+      (dotimes (ii (seq-reduce (lambda (a b) (max a b)) counts 0))
         (insert (concat "\n" newrow))))   ; different number of spaces for each col
 
     (let (opentodos                       ; todos that arent closed
           closedtodos)                    ; todos that are closed
-      (setq closedtodos (remove-if-not (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
-      (setq opentodos (remove-if (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
+      (setq closedtodos (seq-filter (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
+      (setq opentodos (seq-filter (lambda (ii) (not (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii)))) todos))
                                         ; sort closed tasks by date closed
       (setq closedtodos (sort closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
                                                                  (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
