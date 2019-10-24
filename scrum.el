@@ -5,7 +5,7 @@
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: http://github.com/ianxm/emacs-scrum
 ;; Version: 0.0.6
-;; Package-Requires: ((emacs "24.5") (org "8.2") (gnuplot "0.6")
+;; Package-Requires: ((emacs "24.5") (org "8.2") (gnuplot "0.6"))
 ;; Keywords: scrum burndown
 
 ;; This file is not part of GNU Emacs.
@@ -38,18 +38,15 @@
 (defgroup scrum nil
   "Scrum reporting options"
   :tag "Scrum"
-  :group 'scrum
-)
+  :group 'scrum)
 (defcustom scrum-taskid-prefix "T"
   "Prefix added to taskids."
   :type 'string
-  :group 'scrum
-)
+  :group 'scrum)
 (defcustom scrum-board-links nil
   "If true, make the items in the scrum board links."
   :type 'boolean
-  :group 'scrum
-)
+  :group 'scrum)
 (defcustom scrum-board-format 3
   "Specify the format of the scrum board items.
 1. \"id\"
@@ -58,8 +55,7 @@
 4. \"id. owner (closedate)\"
 5. \"id. priority task (owner closedate)\""
   :type 'integer
-  :group 'scrum
-)
+  :group 'scrum)
 (defun scrum--get-developers ()
   "Get list of developers as (name . wpd)."
   (let (ret)
@@ -170,7 +166,7 @@
           (if scrum-board-links
               (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
           (cons label colstr)))
-                "TODO<>\"\""))
+                                             "TODO<>\"\""))
 
     (let (range                           ; range will be '(1 2 3..)
           newrow)                         ; newrow will be "| |  |   |..."
@@ -185,10 +181,10 @@
           closedtodos)                    ; todos that are closed
       (setq closedtodos (remove-if-not (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
       (setq opentodos (remove-if (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
-                                          ; sort closed tasks by date closed
+                                        ; sort closed tasks by date closed
       (setq closedtodos (sort closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
                                                                  (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
-                                          ; sort open tasks by priority
+                                        ; sort open tasks by priority
       (setq opentodos (sort opentodos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
       (setq todos (append opentodos closedtodos)))
 
@@ -199,8 +195,8 @@
         (search-forward (cdr item))       ; find col based on number of spaces
         (forward-char -1)
         (insert (car item))))
-  (goto-char topleft)
-  (org-ctrl-c-ctrl-c)))
+    (goto-char topleft)
+    (org-ctrl-c-ctrl-c)))
 
 (defun scrum--create-match (owner todos)
   "Get a match string for OWNER and sequence of todo keywords TODOS."
@@ -218,7 +214,7 @@
         (act  0)                ; actual hours spent
         (done 0)                ; hours of estimates that are done
         (rem  0))               ; hours of estimates that are left
-(setq developers (car (org-map-entries 'scrum--get-developers "ID=\"TASKS\"")))
+    (setq developers (car (org-map-entries 'scrum--get-developers "ID=\"TASKS\"")))
     (if (= 0 (length developers))
         (error "No developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
@@ -254,7 +250,7 @@
     (setq totleft tot)
     (org-map-entries (lambda () ; look up start date and sprint length
                        (setq cdate (time-subtract (apply 'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART"))))
-                                             (seconds-to-time 86400))) ;; day before sprint start
+                                                  (seconds-to-time 86400))) ;; day before sprint start
                        (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
                      "ID=\"TASKS\"")
     (if (or (null cdate) (null sprintlength))
@@ -273,7 +269,7 @@
            (apply 'encode-time closestr)
            (string-to-number (org-entry-get (point) "ESTIMATED"))
            (org-entry-get (point) "TASKID"))))
-                (scrum--create-match nil org-done-keywords)))
+                                  (scrum--create-match nil org-done-keywords)))
     (while (<= day sprintlength)
       ;; (message "cdate %d %s" day (format-time-string "%Y-%m-%d %H:%M:%S" cdate))
       (setq cdate (time-add cdate (seconds-to-time 86400))) ;; increment current day
@@ -281,20 +277,19 @@
       (insert "\n| " (number-to-string day)
               " | " (format-time-string "%Y-%m-%d" cdate)
               " | " (if (time-less-p cdate today)
-                      (let ((ret (scrum--get-work-left cdate closed tot)))
-                        (setq toremove (car ret))                   ;; save list of completed tasks
-                        (setq tot (cdr ret))                        ;; save new total
-                        (if toremove                                ;; remove completed from master list
-                            (dolist (item toremove)
-                              (setq closed (delq item closed))))
-                        (number-to-string tot))
+                        (let ((ret (scrum--get-work-left cdate closed tot)))
+                          (setq toremove (car ret))                   ;; save list of completed tasks
+                          (setq tot (cdr ret))                        ;; save new total
+                          (if toremove                                ;; remove completed from master list
+                              (dolist (item toremove)
+                                (setq closed (delq item closed))))
+                          (number-to-string tot))
                       "")
               " | " (number-to-string (round (- totleft (* totleft (/ day (* 1.0 sprintlength))))))
               " | " (mapconcat (function (lambda (ii) (nth 2 ii))) toremove " ")
               " | " )
       (setq day (1+ day)))
-    (org-ctrl-c-ctrl-c))
-)
+    (org-ctrl-c-ctrl-c)))
 
 (defun org-dblock-write:block-update-graph (params)
   "Generate burndown chart based on PARAMS."
@@ -349,9 +344,9 @@
   (save-excursion
     (let ((ii 1))
       (scrum--visit-all-task-todos (lambda ()
-                         (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
-                         (setq ii (1+ ii)))
-                       "TODO<>\"\""))))
+                                     (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
+                                     (setq ii (1+ ii)))
+                                   "TODO<>\"\""))))
 
 
 (defun scrum-generate-task-cards ()
@@ -371,15 +366,15 @@
 \\twocolumn
 \n")
       (scrum--visit-all-task-todos (lambda ()
-        (let* ((hdg (nth 4 (org-heading-components)))
-               (bracket (string-match "\\[" hdg))               ; index of bracket character
-               id owner est)
-          (setq id (or (org-entry-get (point) "TASKID") "\\_\\_\\_"))
-          (setq owner (or (org-entry-get (point) "OWNER") "\\_\\_\\_"))
-          (setq est (or (org-entry-get (point) "ESTIMATED") "\\_\\_\\_"))
-          (if bracket
-              (setq hdg (substring hdg 0 (1- bracket))))
-          (setq str (concat str (format "
+            (let* ((hdg (nth 4 (org-heading-components)))
+                   (bracket (string-match "\\[" hdg))               ; index of bracket character
+                   id owner est)
+              (setq id (or (org-entry-get (point) "TASKID") "\\_\\_\\_"))
+              (setq owner (or (org-entry-get (point) "OWNER") "\\_\\_\\_"))
+              (setq est (or (org-entry-get (point) "ESTIMATED") "\\_\\_\\_"))
+              (if bracket
+                  (setq hdg (substring hdg 0 (1- bracket))))
+              (setq str (concat str (format "
 \\vspace{0.4in}
 \\filbreak
 \\begin{tabular}{l r}
@@ -389,7 +384,7 @@
   \\multicolumn{2}{p{\\columnwidth}}{%s} \\\\
 \\end{tabular}
 " est id owner hdg)))))
-        "TODO<>\"\"")
+                                   "TODO<>\"\"")
       (setq str (concat str "\n\\end{document}\n"))
       (with-temp-file "scrum_cards.tex"
         (insert str))
