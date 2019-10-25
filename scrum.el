@@ -1,12 +1,11 @@
-;;; scrum.el --- Helper functions for scrum planning and reporting
+;;; scrum.el --- Helpers for scrum planning and reporting -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012-2019 Ian Martins
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: http://github.com/ianxm/emacs-scrum
 ;; Version: 0.0.6
-;; Package-Requires: ((emacs "24.5") (org "8.2") (gnuplot "0.6"))
-;; Keywords: scrum burndown
+;; Package-Requires: ((emacs "24.5") (org "8.2") (gnuplot "0.6") (seq "2.20"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -181,10 +180,10 @@
           closedtodos)                    ; todos that are closed
       (setq closedtodos (seq-filter (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
       (setq opentodos (seq-filter (lambda (ii) (not (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii)))) todos))
-                                        ; sort closed tasks by date closed
+                                          ; sort closed tasks by date closed
       (setq closedtodos (sort closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
                                                                  (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
-                                        ; sort open tasks by priority
+                                          ; sort open tasks by priority
       (setq opentodos (sort opentodos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
       (setq todos (append opentodos closedtodos)))
 
