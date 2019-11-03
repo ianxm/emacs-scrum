@@ -1,4 +1,4 @@
-;;; scrum.el --- Helpers for scrum planning and reporting -*- lexical-binding: t -*-
+;;; org-scrum.el --- org mode extensions for scrum planning and reporting -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012-2019 Ian Martins
 
@@ -34,19 +34,19 @@
 (require 'gnuplot)
 (require 'org)
 
-(defgroup scrum nil
+(defgroup org-scrum nil
   "Scrum reporting options"
   :tag "Scrum"
-  :group 'scrum)
-(defcustom scrum-taskid-prefix "T"
+  :group 'org-scrum)
+(defcustom org-scrum-taskid-prefix "T"
   "Prefix added to taskids."
   :type 'string
-  :group 'scrum)
-(defcustom scrum-board-links nil
+  :group 'org-scrum)
+(defcustom org-scrum-board-links nil
   "If true, make the items in the scrum board links."
   :type 'boolean
-  :group 'scrum)
-(defcustom scrum-board-format 3
+  :group 'org-scrum)
+(defcustom org-scrum-board-format 3
   "Specify the format of the scrum board items.
 1. \"id\"
 2. \"priority task (closedate)\"
@@ -54,8 +54,8 @@
 4. \"id. owner (closedate)\"
 5. \"id. priority task (owner closedate)\""
   :type 'integer
-  :group 'scrum)
-(defun scrum--get-developers ()
+  :group 'org-scrum)
+(defun org-scrum--get-developers ()
   "Get list of developers as (name . wpd)."
   (let (ret)
     (setq ret (org-entry-properties (point) 'standard))
@@ -70,17 +70,17 @@
                       ret))
     ret))
 
-(defun scrum--get-prop-value (match prop)
+(defun org-scrum--get-prop-value (match prop)
   "Sum values which match MATCH for property PROP in the TASKS tree."
   (let ((val 0)
         ret)
-    (setq ret (scrum--visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
+    (setq ret (org-scrum--visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
     (setq ret (seq-filter (lambda (ii) (> (length ii) 0)) ret))
     (while ret
       (setq val (+ val (string-to-number (pop ret)))))
     val))
 
-(defun scrum--get-finish-date (hours wpd)
+(defun org-scrum--get-finish-date (hours wpd)
   "Count the days to get HOURS work done at WPD hours per day, skipping weekends."
   (let ((ret (current-time))
         (hoursleft hours)
@@ -92,7 +92,7 @@
           (setq hoursleft (- hoursleft wpd))))
     ret))
 
-(defun scrum--get-work-left (cdate closed tot)
+(defun org-scrum--get-work-left (cdate closed tot)
   "Get the actual work remaining for the date CDATE given the list of closed items CLOSED and total hours TOT."
   (let (toremove)
     (dolist (item closed)
@@ -102,7 +102,7 @@
         (push item toremove)))
     (cons toremove tot)))
 
-(defun scrum--draw-progress-bar (est done)
+(defun org-scrum--draw-progress-bar (est done)
   "Draw a progress bar in the summary table with EST total and DONE complete."
   (let ((width 10)
         (blocksdone 5))
@@ -111,7 +111,7 @@
      (apply 'concat (make-list blocksdone "#"))
      (apply 'concat (make-list (- width blocksdone) "-")))))
 
-(defun scrum--visit-all-task-todos (fcn match)
+(defun org-scrum--visit-all-task-todos (fcn match)
   "Call FCN for all tasks in the current tree that match MATCH."
   (save-excursion
     (let (tasks)
@@ -120,8 +120,8 @@
       ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
       (org-map-entries fcn match 'tree))))
 
-(defun org-dblock-write:block-update-board (params)
-  "Generate scrum board based on PARAMS."
+(defun org-dblock-write:block-update-board (_params)
+  "Generate scrum board."
   (interactive)
   (let* (todos                  ; all todos. list of (link . colstr)
          (todokwds (append org-not-done-keywords org-done-keywords)) ; list of all todo keywords
@@ -130,7 +130,7 @@
     (insert "| " (mapconcat 'identity todokwds "|") " |\n|-")
     (setq topleft (point))
     (setq getindx (lambda (ii) (- (length todokwds) (length (member ii todokwds)))))
-    (setq todos (scrum--visit-all-task-todos (lambda ()
+    (setq todos (org-scrum--visit-all-task-todos (lambda ()
         (let* ((todo (org-entry-get (point) "TODO"))
                (hdg (nth 4 (org-heading-components)))
                (bracket (string-match "\\[" hdg))               ; index of bracket character
@@ -157,23 +157,21 @@
               (setq closedate (format-time-string " %Y-%m-%d" (apply 'encode-time closestr)))
               (setq closedateparens (format-time-string " (%Y-%m-%d)" (apply 'encode-time closestr)))))
           (cond                                                                 ; scrum board label
-           ((= 1 scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
-           ((= 2 scrum-board-format) (setq label (concat priority hdg " " closedateparens)))
-           ((= 3 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens)))
-           ((= 4 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " owner closedateparens)))
-           ((= 5 scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg " (" owner closedate ")"))))
-          (if scrum-board-links
+           ((= 1 org-scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
+           ((= 2 org-scrum-board-format) (setq label (concat priority hdg " " closedateparens)))
+           ((= 3 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens)))
+           ((= 4 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " owner closedateparens)))
+           ((= 5 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg " (" owner closedate ")"))))
+          (if org-scrum-board-links
               (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
           (cons label colstr)))
                                              "TODO<>\"\""))
 
-    (let (range                           ; range will be '(1 2 3..)
-          newrow)                         ; newrow will be "| |  |   |..."
-      (dotimes (val (length counts) range)
-        (setq range (cons (- (length counts) val) range)))
+    (let ((range (number-sequence 1 (length counts))) ; range will be '(1 2 3..)
+          newrow)                                     ; newrow will be "| |  |   |..."
       (setq newrow (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|"))
       (goto-char topleft)                 ; lay out empty table rows
-      (dotimes (ii (seq-reduce (lambda (a b) (max a b)) counts 0))
+      (dotimes (_ii (seq-reduce (lambda (a b) (max a b)) counts 0))
         (insert (concat "\n" newrow))))   ; different number of spaces for each col
 
     (let (opentodos                       ; todos that arent closed
@@ -197,7 +195,7 @@
     (goto-char topleft)
     (org-ctrl-c-ctrl-c)))
 
-(defun scrum--create-match (owner todos)
+(defun org-scrum--create-match (owner todos)
   "Get a match string for OWNER and sequence of todo keywords TODOS."
   (when (or owner todos)
     (let (ownerstr)
@@ -206,35 +204,35 @@
           (mapconcat (lambda (ii) (concat ownerstr "+TODO=\"" ii "\"" )) todos "|")
         ownerstr))))
 
-(defun org-dblock-write:block-update-summary (params)
-  "Generate scrum summary table based on PARAMS."
+(defun org-dblock-write:block-update-summary (_params)
+  "Generate scrum summary table."
   (let (developers
         (est  0)                ; hours estimated
         (act  0)                ; actual hours spent
         (done 0)                ; hours of estimates that are done
         (rem  0))               ; hours of estimates that are left
-    (setq developers (car (org-map-entries 'scrum--get-developers "ID=\"TASKS\"")))
+    (setq developers (car (org-map-entries 'org-scrum--get-developers "ID=\"TASKS\"")))
     (if (= 0 (length developers))
         (error "No developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
     (dolist (developer developers)
-      (setq est  (scrum--get-prop-value (scrum--create-match (car developer) (append org-not-done-keywords org-done-keywords)) "ESTIMATED"))
-      (setq act  (scrum--get-prop-value (scrum--create-match (car developer) '()) "ACTUAL"))
-      (setq done (scrum--get-prop-value (scrum--create-match (car developer) org-done-keywords) "ESTIMATED"))
-      (setq rem  (scrum--get-prop-value (scrum--create-match (car developer) org-not-done-keywords) "ESTIMATED"))
+      (setq est  (org-scrum--get-prop-value (org-scrum--create-match (car developer) (append org-not-done-keywords org-done-keywords)) "ESTIMATED"))
+      (setq act  (org-scrum--get-prop-value (org-scrum--create-match (car developer) '()) "ACTUAL"))
+      (setq done (org-scrum--get-prop-value (org-scrum--create-match (car developer) org-done-keywords) "ESTIMATED"))
+      (setq rem  (org-scrum--get-prop-value (org-scrum--create-match (car developer) org-not-done-keywords) "ESTIMATED"))
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
               " | " (number-to-string act)
               " | " (number-to-string done)
               " | " (number-to-string rem)
-              " | " (format-time-string "%Y-%m-%d" (scrum--get-finish-date rem (cdr developer)))
-              " | " (scrum--draw-progress-bar est done)
+              " | " (format-time-string "%Y-%m-%d" (org-scrum--get-finish-date rem (cdr developer)))
+              " | " (org-scrum--draw-progress-bar est done)
               " |"))
     (org-ctrl-c-ctrl-c)))
 
-(defun org-dblock-write:block-update-burndown (params)
-  "Generate burndown table based on PARAMS."
+(defun org-dblock-write:block-update-burndown (_params)
+  "Generate burndown table."
   (insert "| DAY | DATE | ACTUAL | IDEAL | TASKS COMPLETED |\n|-")
   (let ((day 1)               ; day index
         (today (current-time))
@@ -245,7 +243,7 @@
         toremove              ; list of (date est num) for each task that has been counted and can be removed
         cdate)                ; current date for iterating
 
-    (setq tot (scrum--get-prop-value nil "ESTIMATED"))
+    (setq tot (org-scrum--get-prop-value nil "ESTIMATED"))
     (setq totleft tot)
     (org-map-entries (lambda () ; look up start date and sprint length
                        (setq cdate (time-subtract (apply 'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART"))))
@@ -268,7 +266,7 @@
            (apply 'encode-time closestr)
            (string-to-number (org-entry-get (point) "ESTIMATED"))
            (org-entry-get (point) "TASKID"))))
-                                  (scrum--create-match nil org-done-keywords)))
+                                  (org-scrum--create-match nil org-done-keywords)))
     (while (<= day sprintlength)
       ;; (message "cdate %d %s" day (format-time-string "%Y-%m-%d %H:%M:%S" cdate))
       (setq cdate (time-add cdate (seconds-to-time 86400))) ;; increment current day
@@ -276,7 +274,7 @@
       (insert "\n| " (number-to-string day)
               " | " (format-time-string "%Y-%m-%d" cdate)
               " | " (if (time-less-p cdate today)
-                        (let ((ret (scrum--get-work-left cdate closed tot)))
+                        (let ((ret (org-scrum--get-work-left cdate closed tot)))
                           (setq toremove (car ret))                   ;; save list of completed tasks
                           (setq tot (cdr ret))                        ;; save new total
                           (if toremove                                ;; remove completed from master list
@@ -290,8 +288,8 @@
       (setq day (1+ day)))
     (org-ctrl-c-ctrl-c)))
 
-(defun org-dblock-write:block-update-graph (params)
-  "Generate burndown chart based on PARAMS."
+(defun org-dblock-write:block-update-graph (_params)
+  "Generate burndown chart."
   (save-excursion
     (let ((fname "burndown.plt")
           pt                    ; the point
@@ -337,18 +335,18 @@
           (while (re-search-forward "\*" nil t)
             (replace-match "#")))))))
 
-(defun scrum-reset-taskids ()
+(defun org-scrum-reset-taskids ()
   "Replace taskids of all todos in the tasks tree with consecutive values."
   (interactive)
   (save-excursion
     (let ((ii 1))
-      (scrum--visit-all-task-todos (lambda ()
-                                     (org-entry-put (point) "TASKID" (format "%s%02d" scrum-taskid-prefix ii))
+      (org-scrum--visit-all-task-todos (lambda ()
+                                     (org-entry-put (point) "TASKID" (format "%s%02d" org-scrum-taskid-prefix ii))
                                      (setq ii (1+ ii)))
                                    "TODO<>\"\""))))
 
 
-(defun scrum-generate-task-cards ()
+(defun org-scrum-generate-task-cards ()
   "Generate scrum board task cards in latex format.  Writes to \"scrum_cards.pdf\"."
   (interactive)
   (save-excursion
@@ -364,7 +362,7 @@
 \\pagestyle{empty}
 \\twocolumn
 \n")
-      (scrum--visit-all-task-todos (lambda ()
+      (org-scrum--visit-all-task-todos (lambda ()
             (let* ((hdg (nth 4 (org-heading-components)))
                    (bracket (string-match "\\[" hdg))               ; index of bracket character
                    id owner est)
@@ -391,7 +389,7 @@
                      (get-buffer-create "*Standard output*")))))
 
 ;;;###autoload
-(defun scrum-update-all ()
+(defun org-scrum-update-all ()
   "Update all dynamic blocks in a scrum org file."
   (interactive)
   (save-excursion
@@ -422,6 +420,6 @@
           (error "\"block-update-graph\" not found"))
       (org-ctrl-c-ctrl-c))))
 
-(provide 'scrum)
+(provide 'org-scrum)
 
-;;; scrum.el ends here
+;;; org-scrum.el ends here
