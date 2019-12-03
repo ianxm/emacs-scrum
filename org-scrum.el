@@ -125,21 +125,21 @@
   (let* ((todo (org-entry-get (point) "TODO"))
          (todokwds (append org-not-done-keywords org-done-keywords))
          (hdg (nth 4 (org-heading-components)))
-         (bracket (string-match "\\[" hdg))               ; index of bracket character
-         (maxlen 30)                                      ; max length of scrum board task name
-         (priority "[#Z] ")                               ; default to lowest priority
-         (closedate "")                                   ; close date without parens
-         (closedateparens "")                             ; close date with parens
+         (bracket (string-match "\\[" hdg))                ; index of bracket character
+         (maxlen 30)                                       ; max length of scrum board task name
+         (priority "[#Z] ")                                ; default to lowest priority
+         (closedate "")                                    ; close date without parens
+         (closedateparens "")                              ; close date with parens
          owner label indx)
     (if bracket
         (setq hdg (substring hdg 0 (1- bracket))))
     (setq indx (- (length todokwds)
                   (length (member todo todokwds))))
     (setq owner (org-entry-get (point) "OWNER"))
-    (setq hdg (substring hdg 0 (min (length hdg) maxlen)))                ; truncate heading
-    (if (nth 3 (org-heading-components))                                  ; lookup priority
+    (setq hdg (substring hdg 0 (min (length hdg) maxlen))) ; truncate heading
+    (if (nth 3 (org-heading-components))                   ; lookup priority
         (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] ")))
-    (let ((n 0)                                                           ; get close date
+    (let ((n 0)                                            ; get close date
           closetime closestr)
       (setq closetime (org-entry-get (point) "CLOSED"))
       (unless (null closetime)
@@ -147,7 +147,7 @@
         (setq closestr (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closestr)) ; clear time of day
         (setq closedate (format-time-string " %Y-%m-%d" (apply #'encode-time closestr)))
         (setq closedateparens (format-time-string " (%Y-%m-%d)" (apply #'encode-time closestr)))))
-    (cond                                                                 ; scrum board label
+    (cond                                                  ; scrum board label
      ((= 1 org-scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
      ((= 2 org-scrum-board-format) (setq label (concat priority hdg " " closedateparens)))
      ((= 3 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens)))
@@ -160,9 +160,9 @@
 (defun org-dblock-write:block-update-board (_params)
   "Generate scrum board."
   (interactive)
-  (let* (todos                            ; all todos. list of (label . indx)
+  (let* (todos                                          ; all todos. list of (label . indx)
          (todokwds (append org-not-done-keywords org-done-keywords)) ; list of all todo keywords
-         (counts (make-list (length todokwds) 0)) ; count for each todo kwd
+         (counts (make-list (length todokwds) 0))       ; count for each todo kwd
          colstr topleft)
     (insert "| " (mapconcat #'identity todokwds "|") " |\n|-")
     (setq topleft (point))
@@ -174,7 +174,7 @@
               (1+ (nth (cdr item) counts))))
 
     (let ((range (number-sequence 1 (length todokwds))) ; range will be '(1 2 3..)
-          newrow)                                     ; newrow will be "| |  |   |..."
+          newrow)                                       ; newrow will be "| |  |   |..."
       (setq newrow (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|"))
       (goto-char topleft)                 ; lay out empty table rows
       (dotimes (_ii (seq-reduce (lambda (a b) (max a b)) counts 0))
@@ -184,11 +184,11 @@
           closedtodos)                    ; todos that are closed
       (setq closedtodos (seq-filter (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
       (setq opentodos (seq-filter (lambda (ii) (not (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii)))) todos))
-                                          ; sort closed tasks by date closed
-      (setq closedtodos (sort closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
-                                                                 (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
-                                          ; sort open tasks by priority
-      (setq opentodos (sort opentodos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
+      (setq closedtodos (sort             ; sort closed tasks by date closed
+                         closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
+                                                            (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
+      (setq opentodos (sort               ; sort open tasks by priority
+                       opentodos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
       (setq todos (append opentodos closedtodos)))
 
     (dolist (item todos)                  ; fill in table
@@ -196,7 +196,7 @@
         (setcar item (replace-regexp-in-string "\\[#Z\\] " "" (car item)))
         (goto-char topleft)
         (setq colstr (concat "|" (make-string (1+ (cdr item)) ? ) "|"))
-        (search-forward colstr)       ; find col based on number of spaces
+        (search-forward colstr)           ; find col based on number of spaces
         (forward-char -1)
         (insert (car item))))
     (goto-char topleft)
