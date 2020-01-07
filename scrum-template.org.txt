@@ -47,28 +47,7 @@
 :
 :
 #+END:
-** BURNDOWN LIST
-#+PLOT: title:"Burndown" ind:1 deps:(3 4) set:"term dumb" set:"xrange [0:15]" set:"xtics scale 0.5" set:"ytics scale 0.5" file:"burndown.plt"
-#+BEGIN: block-update-burndown
-| DAY |       DATE | ACTUAL | IDEAL | TASKS COMPLETED |
-|-----+------------+--------+-------+-----------------|
-|   1 | 2014-11-03 |      8 |     7 |                 |
-|   2 | 2014-11-04 |        |     7 |                 |
-|   3 | 2014-11-05 |        |     6 |                 |
-|   4 | 2014-11-06 |        |     6 |                 |
-|   5 | 2014-11-07 |        |     5 |                 |
-|   6 | 2014-11-08 |        |     5 |                 |
-|   7 | 2014-11-09 |        |     4 |                 |
-|   8 | 2014-11-10 |        |     4 |                 |
-|   9 | 2014-11-11 |        |     3 |                 |
-|  10 | 2014-11-12 |        |     3 |                 |
-|  11 | 2014-11-13 |        |     2 |                 |
-|  12 | 2014-11-14 |        |     2 |                 |
-|  13 | 2014-11-15 |        |     1 |                 |
-|  14 | 2014-11-16 |        |     1 |                 |
-|  15 | 2014-11-17 |        |     0 |                 |
-#+END:
-** TASK LIST 
+** TASK LIST
 #+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS"
 | ITEM              | TASKID | OWNER    | PRIORITY | TODO | ESTIMATED | ACTUAL |
 |-------------------+--------+----------+----------+------+-----------+--------|
@@ -78,7 +57,7 @@
 | *** name of task1 | S1.01  | devname1 | A        | TODO |         4 |      1 |
 | *** name of task2 | S1.02  | devname2 | B        | TODO |         4 |        |
 #+END:
-* TASKS 
+* TASKS
   :PROPERTIES:
   :ID:       TASKS
   :SPRINTLENGTH: 15
@@ -98,7 +77,7 @@
 *** TODO [#B] name of task2
     :PROPERTIES:
     :ESTIMATED: 4
-    :ACTUAL: 
+    :ACTUAL:
     :OWNER:    devname2
     :TASKID:   S1.02
     :END:

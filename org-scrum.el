@@ -1,11 +1,11 @@
 ;;; org-scrum.el --- org mode extensions for scrum planning and reporting -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012-2019 Ian Martins
+;; Copyright (C) 2012-2020 Ian Martins
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.0.7
-;; Package-Requires: ((emacs "24.5") (org "8.2") (gnuplot "0.6") seq)
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -31,21 +31,24 @@
 ;;; Code:
 
 (require 'seq)
-(require 'gnuplot)
+(require 'cl-lib)
 (require 'org)
 
 (defgroup org-scrum nil
   "Scrum reporting options"
   :tag "Scrum"
   :group 'org)
+
 (defcustom org-scrum-taskid-prefix "T"
   "Prefix added to taskids."
   :type 'string
   :group 'org-scrum)
+
 (defcustom org-scrum-board-links nil
   "If true, make the items in the scrum board links."
   :type 'boolean
   :group 'org-scrum)
+
 (defcustom org-scrum-board-format 3
   "Specify the format of the scrum board items.
 1. \"id\"
@@ -55,6 +58,22 @@
 5. \"id. priority task (owner closedate)\""
   :type 'integer
   :group 'org-scrum)
+
+(defcustom org-scrum-ascii-graph t
+  "If t, render the classic ascii burndown chart, else embed a fancy --some might say ostentatious-- svg image."
+  :type 'boolean
+  :group 'org-scrum)
+
+(defcustom org-scrum-ascii-size '(100 . 30)
+  "The size (width . height) in characters to make ascii graphs."
+  :type '(cons number number)
+  :group 'org-scrum)
+
+(defcustom org-scrum-image-size '(700 . 450)
+  "The size (width . height) in pixels to make image graphs."
+  :type '(cons number number)
+  :group 'org-scrum)
+
 (defun org-scrum--get-developers ()
   "Get list of developers as (name . wpd)."
   (let (ret)
@@ -93,7 +112,8 @@
     ret))
 
 (defun org-scrum--get-work-left (cdate closed tot)
-  "Get the actual work remaining for the date CDATE given the list of closed items CLOSED and total hours TOT."
+  "Get the actual work remaining for the date CDATE given the list of closed items CLOSED and total hours TOT.
+Returns (list-of-closed-tasks total-remaining-work)"
   (let (toremove)
     (dolist (item closed)
       ;; (message "item %s" (format-time-string "%Y-%m-%d %H:%M:%S" (car item)))
@@ -254,21 +274,64 @@ This returns (time-closed estimated taskid) for each closed task found."
      (string-to-number (org-entry-get (point) "ESTIMATED"))
      (org-entry-get (point) "TASKID"))))
 
-(defun org-dblock-write:block-update-burndown (_params)
-  "Generate burndown table."
-  (insert "| DAY | DATE | ACTUAL | IDEAL | TASKS COMPLETED |\n|-")
-  (let ((day 1)               ; day index
-        (today (current-time))
-        tot                   ; total hours of estimates
-        totleft               ; total left
-        sprintlength          ; number of calendar days in the sprint
-        closed                ; list of (date est num) for each task that was completed
-        toremove              ; list of (date est num) for each task that has been counted and can be removed
-        cdate)                ; current date for iterating
+(defun org-scrum--compute-actual-burndown (start sprintlength tot)
+  "Compute actual burndown for each day of the sprint.
+The sprint starts at date START and lasts SPRINTLENGTH days.  TOT
+is the total number of story points for the sprint."
+  (let ((left tot)                      ; total actually left
+        (closed (org-map-entries #'org-scrum--lookup-closed-tasks (org-scrum--create-match nil org-done-keywords))) ; list of (date est num) for each task that was completed
+        (today (current-time))          ; know when today is because we can't fill in the future burndown
+        (cdate start)                   ; the date of the current date as we iterate
+        (day 0)                         ; counts the days as we iterate
+        actual-burndown)                ; the list of burndown by day
+    (while (<= day sprintlength)
+      (setq cdate (time-add cdate (seconds-to-time 86400))) ; increment current day
+      (if (time-less-p cdate today)
+          (let ((toremove nil)
+                (ret (org-scrum--get-work-left cdate closed left)))
+            (setq toremove (car ret) ; save list of completed tasks
+                  left (cdr ret)  ; save new total
+                  closed (seq-remove (lambda (x) (seq-contains toremove x)) closed) ; remove tasks that have been counted
+                  actual-burndown (cons (number-to-string left) actual-burndown)))
+        (setq actual-burndown (cons "" actual-burndown)))
+      (setq day (1+ day)))
+    (reverse actual-burndown)))
 
-    (setq tot (org-scrum--get-prop-value nil "ESTIMATED"))
-    (setq totleft tot)
-    (org-map-entries (lambda () ; look up start date and sprint length
+(defun org-scrum--compute-ideal-burndown (start sprintlength tot)
+  "Compute ideal burndown for each day of the sprint.
+The sprint starts at START and lasts SPRINTLENGTH days.  TOT is
+the total number of story points for the sprint."
+  (let ((cdate start)                   ; the current date as we iterate
+        (day 0)                         ; counts the days as we iterate
+        ctime                           ; holds extracted date components
+        ideal-burndown)                 ; the list of burndown by day
+    ;; find weekdays. make `ideal-burndown' a list of days where each weekday is t
+    (while (< day sprintlength)
+      (setq ctime (decode-time cdate)
+            ideal-burndown (cons (and (> (nth 6 ctime) 0) (< (nth 6 ctime) 6)) ideal-burndown)
+            cdate (time-add cdate (seconds-to-time 86400)) ; increment current day
+            day (1+ day)))              ; increment day counter
+    (reverse ideal-burndown)
+
+    ;; compute the ideal burndown rate and use it to fill in `ideal-burndown'
+    (let* ((count (seq-reduce (lambda (c ii) (if ii (1+ c) c)) ideal-burndown 0)) ; count weekdays
+           (rate  (/ (float tot) count))
+           (left tot))
+      (dotimes (day (length ideal-burndown))
+        (if (nth day ideal-burndown)
+            (setq left (max 0 (- left rate))))
+        (setcar (nthcdr day ideal-burndown) left)))
+    ideal-burndown))
+
+(defun org-scrum--compute-burndown ()
+  "Compute ideal and actual burndown for each day of the sprint.
+Returns a list of (date actual ideal)."
+  (let* ((tot (org-scrum--get-prop-value nil "ESTIMATED")) ; total estimated hours
+         cdate                 ; current date for iterating
+         sprintlength)         ; number of calendar days in the sprint
+
+    ;; look up start date and sprint length
+    (org-map-entries (lambda ()
                        (setq cdate (time-subtract (apply #'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART"))))
                                                   (seconds-to-time 86400))) ; day before sprint start
                        (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
@@ -276,74 +339,77 @@ This returns (time-closed estimated taskid) for each closed task found."
     (if (or (null cdate) (null sprintlength))
         (error "Couldn't find node with ID=\"TASKS\" containing \"SPRINTLENGTH\" and \"SPRINTSTART\" properties"))
 
-    (setq closed (org-map-entries #'org-scrum--lookup-closed-tasks (org-scrum--create-match nil org-done-keywords)))
-    (while (<= day sprintlength)
-      ;; (message "cdate %d %s" day (format-time-string "%Y-%m-%d %H:%M:%S" cdate))
-      (setq cdate (time-add cdate (seconds-to-time 86400))) ;; increment current day
-      (setq toremove nil)
-      (insert "\n| " (number-to-string day)
-              " | " (format-time-string "%Y-%m-%d" cdate)
-              " | " (if (time-less-p cdate today)
-                        (let ((ret (org-scrum--get-work-left cdate closed tot)))
-                          (setq toremove (car ret))                   ;; save list of completed tasks
-                          (setq tot (cdr ret))                        ;; save new total
-                          (if toremove                                ;; remove completed from master list
-                              (dolist (item toremove)
-                                (setq closed (delq item closed))))
-                          (number-to-string tot))
-                      "")
-              " | " (number-to-string (round (- totleft (* totleft (/ day (* 1.0 sprintlength))))))
-              " | " (mapconcat (function (lambda (ii) (nth 2 ii))) toremove " ")
-              " | " )
-      (setq day (1+ day)))
-    (org-ctrl-c-ctrl-c)))
+    (cl-mapcar #'list ; this zips the lists together
+            (number-sequence 1 sprintlength)
+            (org-scrum--compute-actual-burndown cdate sprintlength tot)
+            (org-scrum--compute-ideal-burndown cdate sprintlength tot))))
+
+(defun org-scrum--check-gnuplot-exists ()
+  "Check if gnuplot is installed on the system."
+  (unless (eq 0 (call-process-shell-command "gnuplot --version"))
+    (error "Cannot find gnuplot")))
+
+(defun org-scrum--make-gnuplot-config (burndown-data)
+  "Write a gnuplot config (including inline data taken from
+BURNDOWN-DATA) to the current buffer, which should be empty."
+  (cond (org-scrum-ascii-graph
+         (insert (format "set term dumb size %d, %d\n\n" (car org-scrum-ascii-size) (cdr org-scrum-ascii-size)))
+         (insert "set style line 1 lt 1 lw 1\n")
+         (insert "set style line 2 lt 2 lw 1\n"))
+        (t
+         (insert (format "set term svg size %d, %d background \"white\"\n\n"
+                         (car org-scrum-image-size)
+                         (cdr org-scrum-image-size)))
+         (insert (format "set output \"burndown.svg\"\n"))
+         (insert "set style line 1 lt -1 lw 2 lc \"#399320\"\n")
+         (insert "set style line 2 lt 0 lw 1\n")))
+  (insert "set title \"Burndown\"\n")
+  (insert "set xlabel \"day\"\n")
+  (insert "set ylabel \"points\"\n")
+  (insert (format "set xrange [1:%d]\n" (length burndown-data)))
+  (insert "plot \"-\" using 1:2 with lines ls 1 title \"actual\", \"\" using 1:3 with lines ls 2 title \"ideal\"\n")
+
+  (insert (mapconcat (lambda (row) (apply #'format (cons "%d %s %s" row)))
+                     burndown-data
+                     "\n"))
+  (insert "\ne\n")
+  ;; gnuplot makes you include the data twice if you want to plot two lines and provide the data inline
+  (insert (mapconcat (lambda (row) (apply #'format (cons "%d %s %s" row)))
+                     burndown-data
+                     "\n"))
+  (insert "\ne\n"))
 
 (defun org-dblock-write:block-update-graph (_params)
   "Generate burndown chart."
-  (save-excursion
-    (let ((fname "burndown.plt")
-          pt                    ; the point
-          found                 ; true if plot block is found
-          sprintlength)         ; calendar days in sprint
-      (goto-char (point-min))
-      (setq found (re-search-forward "#\\+PLOT: .*title:\"Burndown\"" nil t))
-      (if (not found)
-          (error "PLOT block not found"))
-      (org-map-entries (lambda () ; look up start date and sprint length
-                         (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
-                       "ID=\"TASKS\"")
-      (if (null sprintlength)
-          (error "Couldn't find node with ID=\"TASKS\" containing \"SPRINTLENGTH\" and \"SPRINTSTART\" properties"))
-      (save-excursion
-        (goto-char (point-min))
-        (re-search-forward "#\\+PLOT: .*title:\"Burndown\"")
-        (search-forward "set:\"xrange ")
-        (forward-char 3)
-        (while (not (looking-at "]"))
-          (delete-char 1))
-        (insert (number-to-string sprintlength)))
-      (org-plot/gnuplot)
-      (when (file-exists-p fname)
-        (goto-char (point-min))
-        (re-search-forward "#\\+BEGIN: .*block-update-graph")   ; must exist
-        (forward-line 1)                            ; move into dynamic block
-        (setq pt (point))
-        (insert-file-contents fname)
-        (delete-file fname)                         ; del temp file
-        (delete-char 1)                             ; form feed
-        (while (not (looking-at "#\\+END"))
+
+  (org-scrum--check-gnuplot-exists)
+
+  (goto-char (point-min))
+  (re-search-forward "#\\+BEGIN: .*block-update-graph") ; must exist
+  (forward-line 1)                                      ; move into dynamic block
+
+  (let ((buffer (current-buffer))
+        (burndown-data (org-scrum--compute-burndown))
+        (pt (point)))
+    (with-temp-buffer
+      (org-scrum--make-gnuplot-config burndown-data)
+      (call-process-region (point-min) (point-max) "gnuplot" nil buffer)
+      (set-buffer buffer)
+      (if (not org-scrum-ascii-graph)
+          (progn
+            (insert "[[./burndown.svg]]")      ; using an org link instead of embedding the image
+            (org-display-inline-images))       ; so it gets exported correctly
+        (goto-char pt)
+        (while (re-search-forward "\f" nil t)  ; delete the formfeed in gnuplot output
+          (replace-match ""))
+        (while (not (looking-at "#\\+END"))    ; prefix graph lines so org exports them cleanly
           (insert ":")
           (forward-line 1))
-        (save-restriction                           ; change ideal to .
+        (save-restriction
           (narrow-to-region pt (point))
-          (goto-char pt)
-          (while (re-search-forward "#" nil t)
-            (replace-match "\.")))
-        (save-restriction                           ; change actual to #
-          (narrow-to-region pt (point))
-          (goto-char pt)
-          (while (re-search-forward "\*" nil t)
-            (replace-match "#")))))))
+          (goto-char pt)                       ; the default linestyle with dots also has '+'s at the points
+          (while (re-search-forward "#" nil t) ; which make the graph busier, so we use '#' and then swap them
+            (replace-match "\.")))))))         ; for dots
 
 (defun org-scrum-reset-taskids ()
   "Replace taskids of all todos in the tasks tree with consecutive values."
@@ -423,11 +489,6 @@ system. The result is the file \"scrum_cards.pdf\"."
       (setq found (re-search-forward "#\\+BEGIN: block-update-board" nil t))
       (if (not found)
           (error "\"block-update-board\" not found"))
-      (org-ctrl-c-ctrl-c)
-      (goto-char (point-min))
-      (setq found (re-search-forward "#\\+BEGIN: block-update-burndown" nil t))
-      (if (not found)
-          (error "\"block-update-burndown\" not found"))
       (org-ctrl-c-ctrl-c)
       (goto-char (point-min))
       (setq found (re-search-forward "#\\+BEGIN: block-update-graph" nil t))
