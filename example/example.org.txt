@@ -1,0 +1,230 @@
+#+TITLE: Emacs Scrum Report Generator
+#+AUTHOR: ian
+#+EMAIL: ianxm@jhu.edu
+#+TODO: TODO STARTED | DONE DEFERRED
+#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+}
+
+* REPORTS
+** SCRUM BOARD
+#+BEGIN: block-update-board
+| TODO                          | STARTED             | DONE                                          | DEFERRED                           |
+|-------------------------------+---------------------+-----------------------------------------------+------------------------------------|
+| T11. add license to src files | T12. [#C] write doc | T10. [#B] create scrum board (2012-12-05)     | T01. [#B] learn elisp (2012-12-08) |
+| T13. post to github           |                     | T09. [#C] create burndown chart (2012-12-02)  |                                    |
+|                               |                     | T07. [#A] create summary table (2012-12-01)   |                                    |
+|                               |                     | T08. [#B] create burndown list (2012-12-01)   |                                    |
+|                               |                     | T04. [#A] write example org file (2012-11-29) |                                    |
+|                               |                     | T03. [#A] set up project folder (2012-11-28)  |                                    |
+|                               |                     | T06. [#A] create task list table (2012-11-28) |                                    |
+|                               |                     | T02. learn org mode (2012-11-27)              |                                    |
+|                               |                     | T05. [#A] draw up reports ui's (2012-11-27)   |                                    |
+#+END:
+** DEVELOPER SUMMARY
+#+BEGIN: block-update-summary
+| NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
+|-------+-----------+--------+------+-----------+--------------+------------|
+| Ian   |        32 |     38 |   32 |         0 |   2020-01-01 | ########## |
+| Kevin |         7 |      9 |    6 |         1 |   2020-01-02 | #########- |
+| Wil   |        17 |     10 |   13 |         4 |   2020-01-03 | ########-- |
+#+END:
+** BURNDOWN CHART
+#+BEGIN: block-update-graph
+:
+:                                                 Burndown
+:
+:        60 +------------------------------------------------------------------------------------+
+:           |      +            +            +            +            +            +            |
+:           |***                                                                   ideal ....... |
+:           |...**                                                                actual ******* |
+:        50 |-+   *                                                                            +-|
+:           |      *****.                                                                        |
+:           |           *......                                                                  |
+:           |            *******                                                                 |
+:        40 |-+                 *********                                                      +-|
+:           |                         ...*..                                                     |
+:           |                             * .                                                    |
+:        30 |-+                            **......                                            +-|
+:           |                                      ......                                        |
+:           |                                ***         .                                       |
+:           |                                   *         ......                                 |
+:        20 |-+                                  **             ......                         +-|
+:           |                                                         .                          |
+:           |                                      *****************   ......                    |
+:           |                                                       **       ......              |
+:        10 |-+                                                       *            .           +-|
+:           |                                                          *******************       |
+:           |                                                                             *******|
+:           |      +            +            +            +            +            +           .|
+:         0 +------------------------------------------------------------------------------------+
+:                  2            4            6            8            10           12           14
+:                                                    day
+:
+:
+#+END:
+** TASK LIST
+#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS"
+| ITEM                             | TASKID | OWNER     | PRIORITY | TODO     | ESTIMATED | ACTUAL |
+|----------------------------------+--------+-----------+----------+----------+-----------+--------|
+| * TASKS                          |        |           |          |          |        56 |     57 |
+|----------------------------------+--------+-----------+----------+----------+-----------+--------|
+| ** RESEARCH                      |        |           |          |          |         8 |     14 |
+| *** learn elisp                  | T01    | ian       | B        | DEFERRED |         4 |     10 |
+| *** learn org mode               | T02    | ian       |          | DONE     |         4 |      4 |
+|----------------------------------+--------+-----------+----------+----------+-----------+--------|
+| ** ENVIRONMENT                   |        |           |          |          |         4 |      4 |
+| *** set up project folder [3/3]  | T03    | kevin     | A        | DONE     |         1 |      1 |
+| *** write example org file       | T04    | wil       | A        | DONE     |         3 |      3 |
+|----------------------------------+--------+-----------+----------+----------+-----------+--------|
+| ** DESIGN                        |        |           |          |          |         4 |      3 |
+| *** draw up reports ui's         | T05    | wil       | A        | DONE     |         4 |      3 |
+|----------------------------------+--------+-----------+----------+----------+-----------+--------|
+| ** CODING                        |        |           |          |          |        35 |     35 |
+| *** create task list table [2/2] | T06    | wil kevin | A        | DONE     |         6 |      3 |
+| *** create summary table         | T07    | kevin     | A        | DONE     |         5 |      8 |
+| *** create burndown list         | T08    | ian       | B        | DONE     |         8 |     12 |
+| *** create burndown chart        | T09    | ian wil   | C        | DONE     |        10 |      4 |
+| *** create scrum board           | T10    | ian       | B        | DONE     |         6 |      8 |
+|----------------------------------+--------+-----------+----------+----------+-----------+--------|
+| ** PUBLISH                       |        |           |          |          |         5 |      1 |
+| *** add license to src files     | T11    | wil       |          | TODO     |         1 |        |
+| *** write doc                    | T12    | wil       | C        | STARTED  |         3 |      1 |
+| *** post to github [0/2]         | T13    | kevin ian |          | TODO     |         1 |        |
+#+END:
+* TASKS
+  :PROPERTIES:
+  :ID:       TASKS
+  :SPRINTLENGTH: 14
+  :SPRINTSTART: <2012-11-26 Mon>
+  :wpd-ian:      3
+  :wpd-kevin:    4
+  :wpd-wil:      3.5
+  :END:
+** RESEARCH
+*** DEFERRED [#B] learn elisp
+    CLOSED: [2012-12-08 Sat 10:31]
+    :PROPERTIES:
+    :ESTIMATED: 4
+    :ACTUAL:   10
+    :OWNER:    ian
+    :TASKID:   T01
+    :END:
+    read [[http://steve-yegge.blogspot.com/2008/01/emergency-elisp.html][stevey's tutorial]]
+    skim the [[http://www.gnu.org/software/emacs/manual/html_node/elisp/][elisp reference]]
+*** DONE learn org mode
+    CLOSED: [2012-11-27 Tue 18:24]
+    :PROPERTIES:
+    :ESTIMATED: 4
+    :ACTUAL:   4
+    :OWNER:    ian
+    :TASKID:   T02
+     :END:
+    read the [[http://orgmode.org/org.html][org mode reference]]
+** ENVIRONMENT
+*** DONE [#A] set up project folder [3/3]
+    CLOSED: [2012-11-28 Wed 20:58]
+    :PROPERTIES:
+    :ESTIMATED: 1
+    :ACTUAL:   1
+    :OWNER:    kevin
+    :TASKID:   T03
+    :END:
+    - [X] init git repo
+    - [X] set up remote backups
+*** DONE [#A] write example org file
+    CLOSED: [2012-11-29 Thu 20:18]
+    :PROPERTIES:
+    :ESTIMATED: 3
+    :ACTUAL:   3
+    :OWNER:    wil
+    :TASKID:   T04
+    :END:
+** DESIGN
+*** DONE [#A] draw up reports ui's
+    CLOSED: [2012-11-27 Tue 18:24]
+    :PROPERTIES:
+    :ESTIMATED: 4
+    :ACTUAL:   3
+    :OWNER:    wil
+    :TASKID:   T05
+    :END:
+    list the info each report should contain.  base reports on what
+    info is already easily available in org mode.
+** CODING
+    CLOSED: [2012-12-01 Sat 09:48]
+*** DONE [#A] create task list table [2/2]
+    CLOSED: [2012-11-28 Wed 10:58]
+    :PROPERTIES:
+    :OWNER:    wil kevin
+    :ESTIMATED: 6
+    :ACTUAL:   3
+    :TASKID:   T06
+    :END:
+    task list should list the tasks in the org tree as a table.  it
+    should have columns for the task id, owner, and show estimates and
+    actuals.
+    - [X] compute and draw progress bars
+    - [X] compute 'pencils down' date
+*** DONE [#A] create summary table
+    CLOSED: [2012-12-01 Sat 12:48]
+    :PROPERTIES:
+    :OWNER:    kevin
+    :ESTIMATED: 5
+    :ACTUAL:   8
+    :TASKID:   T07
+    :END:
+    summary table should show how busy each developer is, and how much
+    progress they are making.
+*** DONE [#B] create burndown list
+    CLOSED: [2012-12-01 Sat 15:48]
+    :PROPERTIES:
+    :OWNER:    ian
+    :ESTIMATED: 8
+    :ACTUAL:   12
+    :TASKID:   T08
+    :END:
+    the burndown list is mainly to lay out the data used to draw the burndown chart.
+*** DONE [#C] create burndown chart
+    CLOSED: [2012-12-02 Sun 16:48]
+    :PROPERTIES:
+    :OWNER:    ian wil
+    :ESTIMATED: 10
+    :ACTUAL:   4
+    :TASKID:   T09
+    :END:
+    generate an ascii burndown chart via gnuplot.
+*** DONE [#B] create scrum board
+    CLOSED: [2012-12-05 Wed 23:10]
+    :PROPERTIES:
+    :OWNER:    ian
+    :ESTIMATED: 6
+    :ACTUAL:   8
+    :TASKID:   T10
+    :END:
+    create a table with a column for each TODO status.  fill it with
+    the tasks, where each task in the table links to that task in the
+    outline.
+** PUBLISH
+*** TODO add license to src files
+    :PROPERTIES:
+    :OWNER:    wil
+    :ESTIMATED: 1
+    :ACTUAL:
+    :TASKID:   T11
+    :END:
+*** STARTED [#C] write doc
+    :PROPERTIES:
+    :OWNER:    wil
+    :ESTIMATED: 3
+    :ACTUAL:   1
+    :TASKID:   T12
+    :END:
+    write a readme
+*** TODO post to github [0/2]
+    :PROPERTIES:
+    :OWNER:    kevin ian
+    :ESTIMATED: 1
+    :ACTUAL:
+    :TASKID:   T13
+    :END:
+    - [ ] create a project
+    - [ ] push repo

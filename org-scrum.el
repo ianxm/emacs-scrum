@@ -35,8 +35,8 @@
 (require 'org)
 
 (defgroup org-scrum nil
-  "Scrum reporting options"
-  :tag "Scrum"
+  "Options for customizing scrum reports"
+  :tag "Org Scrum"
   :group 'org)
 
 (defcustom org-scrum-taskid-prefix "T"
