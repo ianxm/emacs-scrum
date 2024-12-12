@@ -4,7 +4,7 @@
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -60,7 +60,7 @@
   :group 'org-scrum)
 
 (defcustom org-scrum-ascii-graph t
-  "If t, render the classic ascii burndown chart, else embed a fancy --some might say ostentatious-- svg image."
+  "If t, render the classic ascii burndown chart, else embed a fancy svg image."
   :type 'boolean
   :group 'org-scrum)
 
@@ -76,28 +76,30 @@
 
 (defun org-scrum--get-developers ()
   "Get list of developers as (name . wpd)."
-  (let (ret)
-    (setq ret (org-entry-properties (point) 'standard))
-    (setq ret (seq-filter (lambda (ii)                  ; filter out non-developer properties
-                           (and
-                            (>= (length (car ii)) 5)
-                            (string= (upcase (substring (car ii) 0 4)) "WPD-")))
-                         ret))
-    (setq ret (mapcar (function (lambda (ii) (cons     ; remove the `wpd-' prefix to get the name
-                                              (capitalize (substring (car ii) 4 (length (car ii))))
-                                              (string-to-number (cdr ii)))))
-                      ret))
-    ret))
+  (mapcar                                       ; format return value
+   (function
+    (lambda (ii)
+      (cons
+       (capitalize (substring (car ii) 4 (length (car ii))))
+       (string-to-number (cdr ii)))))
+   (seq-filter                                  ; developer entries
+    (lambda (ii)
+      (and
+       (>= (length (car ii)) 5)
+       (string= (upcase (substring (car ii) 0 4)) "WPD-")))
+    (org-entry-properties (point) 'standard)))) ; entries
 
 (defun org-scrum--get-prop-value (match prop)
   "Sum values which match MATCH for property PROP in the TASKS tree."
-  (let ((val 0)
-        ret)
-    (setq ret (org-scrum--visit-all-task-todos (lambda () (org-entry-get (point) prop)) match))
-    (setq ret (seq-filter (lambda (ii) (> (length ii) 0)) ret))
-    (while ret
-      (setq val (+ val (string-to-number (pop ret)))))
-    val))
+  (apply
+   #'+
+   (mapcar                                      ; values
+    #'string-to-number
+    (seq-filter                                 ; entries with prop
+     (lambda (ii) (> (length ii) 0))
+     (org-scrum--visit-all-task-todos           ; entries
+      (lambda () (org-entry-get (point) prop))
+      match)))))
 
 (defun org-scrum--get-finish-date (hours wpd)
   "Count the days to get HOURS work done at WPD hours per day, skipping weekends."
@@ -105,15 +107,17 @@
         (hoursleft hours)
         ctime)
     (while (> hoursleft 0)
-      (setq ret (time-add ret (seconds-to-time 86400)))
-      (setq ctime (decode-time ret))
+      (setq ret (time-add ret (seconds-to-time 86400))
+            ctime (decode-time ret))
       (if (and (> (nth 6 ctime) 0) (< (nth 6 ctime) 6))
           (setq hoursleft (- hoursleft wpd))))
     ret))
 
 (defun org-scrum--get-work-left (cdate closed tot)
-  "Get the actual work remaining for the date CDATE given the list of closed items CLOSED and total hours TOT.
-Returns (list-of-closed-tasks total-remaining-work)"
+  "Get the actual work remaining for the date CDATE.
+Computes work remaining given the list of closed items CLOSED and
+total hours TOT.  Returns (list-of-closed-tasks
+total-remaining-work)"
   (let (toremove)
     (dolist (item closed)
       ;; (message "item %s" (format-time-string "%Y-%m-%d %H:%M:%S" (car item)))
@@ -140,105 +144,113 @@ Returns (list-of-closed-tasks total-remaining-work)"
       ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
       (org-map-entries fcn match 'tree))))
 
+(defun org-scrum--extract-heading ()
+  "Extract the heading from the current entry"
+  (let* ((fullhdg (nth 4 (org-heading-components)))
+         (bracket (string-match "\\[" fullhdg)) ; index of bracket character
+         (hdg (if bracket
+                  (substring fullhdg 0 (min (1- bracket) ))
+                fullhdg))
+         (maxlen 30)) ; max length of scrum board task name
+    (substring fullhdg 0 (min (length hdg) maxlen))))
+
 (defun org-scrum--make-scrum-board-entry ()
   "Make a scrum board entry from a TODO."
-  (let* ((todo (org-entry-get (point) "TODO"))
-         (todokwds (append org-not-done-keywords org-done-keywords))
-         (hdg (nth 4 (org-heading-components)))
-         (bracket (string-match "\\[" hdg))                ; index of bracket character
-         (maxlen 30)                                       ; max length of scrum board task name
-         (priority "[#Z] ")                                ; default to lowest priority
-         (closedate "")                                    ; close date without parens
-         (closedateparens "")                              ; close date with parens
-         owner label indx)
-    (if bracket
-        (setq hdg (substring hdg 0 (1- bracket))))
-    (setq indx (- (length todokwds)
-                  (length (member todo todokwds))))
-    (setq owner (org-entry-get (point) "OWNER"))
-    (setq hdg (substring hdg 0 (min (length hdg) maxlen))) ; truncate heading
-    (if (nth 3 (org-heading-components))                   ; lookup priority
-        (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] ")))
-    (let ((n 0)                                            ; get close date
-          closetime closestr)
-      (setq closetime (org-entry-get (point) "CLOSED"))
-      (unless (null closetime)
-        (setq closestr (parse-time-string closetime))
-        (setq closestr (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closestr)) ; clear time of day
-        (setq closedate (format-time-string " %Y-%m-%d" (apply #'encode-time closestr)))
-        (setq closedateparens (format-time-string " (%Y-%m-%d)" (apply #'encode-time closestr)))))
-    (cond                                                  ; scrum board label
-     ((= 1 org-scrum-board-format) (setq label (org-entry-get (point) "TASKID")))
-     ((= 2 org-scrum-board-format) (setq label (concat priority hdg " " closedateparens)))
-     ((= 3 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens)))
-     ((= 4 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " owner closedateparens)))
-     ((= 5 org-scrum-board-format) (setq label (concat (org-entry-get (point) "TASKID") ". " priority hdg " (" owner closedate ")"))))
-    (if org-scrum-board-links
-        (setq label (org-make-link-string (org-make-org-heading-search-string) label)))
-    (cons label indx)))
+    (let* ((todo (org-entry-get (point) "TODO"))
+           (todokwds (append org-not-done-keywords org-done-keywords))
+           (hdg (org-scrum--extract-heading))
+           (priority (if (nth 3 (org-heading-components)) ; lookup priority
+                         (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] "))
+                       "[#Z] "))        ; default to lowest priority
+           (closedate "")               ; close date without parens
+           (closedateparens "")         ; close date with parens
+           (indx (- (length todokwds)
+                    (length (member todo todokwds))))
+           (owner (org-entry-get (point) "OWNER"))
+           (closetime (org-entry-get (point) "CLOSED"))
+           (nn 0)
+           label closestr)
+      (unless (null closetime)          ; only include closedate for DONE items
+        (setq closestr (mapcar
+                        (function (lambda (x) (if (< (setq nn (1+ nn)) 4) 0 x)))
+                        (parse-time-string closetime)) ; clear time of day
+              closedate (format-time-string "%Y-%m-%d" (apply #'encode-time closestr))
+              closedateparens (concat " (" closedate ")")))
+      (setq label (cond                 ; scrum board label
+         ((= 1 org-scrum-board-format) (org-entry-get (point) "TASKID"))
+         ((= 2 org-scrum-board-format) (concat priority hdg closedateparens))
+         ((= 3 org-scrum-board-format) (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens))
+         ((= 4 org-scrum-board-format) (concat (org-entry-get (point) "TASKID") ". " owner closedateparens))
+         ((= 5 org-scrum-board-format) (concat (org-entry-get (point) "TASKID") ". " priority hdg " (" owner " " closedate ")"))))
+      (if org-scrum-board-links
+          (setq label (org-link-make-string (org-link-heading-search-string) label)))
+      (cons label indx)))
 
 (defun org-dblock-write:block-update-board (_params)
   "Generate scrum board."
   (interactive)
-  (let* (todos                                          ; all todos. list of (label . indx)
-         (todokwds (append org-not-done-keywords org-done-keywords)) ; list of all todo keywords
-         (counts (make-list (length todokwds) 0))       ; count for each todo kwd
+  (let* ((todos                    ; all todos. list of (label . indx)
+          (org-scrum--visit-all-task-todos #'org-scrum--make-scrum-board-entry "TODO<>\"\""))
+         (todokwds                      ; list of all todo keywords
+          (append org-not-done-keywords org-done-keywords))
+         (counts                        ; count for each todo kwd
+          (make-list (length todokwds) 0))
          colstr topleft)
     (insert "| " (mapconcat #'identity todokwds "|") " |\n|-")
     (setq topleft (point))
-    (setq todos (org-scrum--visit-all-task-todos #'org-scrum--make-scrum-board-entry "TODO<>\"\""))
 
     ;; count the number of scrum board entries in each column
     (dolist (item todos)
       (setcar (nthcdr (cdr item) counts)
               (1+ (nth (cdr item) counts))))
 
-    (let ((range (number-sequence 1 (length todokwds))) ; range will be '(1 2 3..)
-          newrow)                                       ; newrow will be "| |  |   |..."
-      (setq newrow (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|"))
-      (goto-char topleft)                 ; lay out empty table rows
+    (let* ((range (number-sequence 1 (length todokwds))) ; range will be '(1 2 3..)
+           (newrow                                       ; newrow will be "| |  |   |..."
+            (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|")))
+      (goto-char topleft)               ; lay out empty table rows
       (dotimes (_ii (seq-reduce (lambda (a b) (max a b)) counts 0))
-        (insert (concat "\n" newrow))))   ; different number of spaces for each col
+        (insert (concat "\n" newrow)))) ; different number of spaces for each col
 
-    (let (opentodos                       ; todos that arent closed
-          closedtodos)                    ; todos that are closed
-      (setq closedtodos (seq-filter (lambda (ii) (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii))) todos))
-      (setq opentodos (seq-filter (lambda (ii) (not (string-match "[0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}" (car ii)))) todos))
-      (setq closedtodos (sort             ; sort closed tasks by date closed
-                         closedtodos (lambda (a b) (string< (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car b))
-                                                            (replace-regexp-in-string ".*\\([0-9]\\{4\\}\\-[0-9]\\{2\\}\\-[0-9]\\{2\\}\\).*" "\\1" (car a))))))
-      (setq opentodos (sort               ; sort open tasks by priority
-                       opentodos (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
-      (setq todos (append opentodos closedtodos)))
+    (let* ((date-pat (rx (= 4 digit) ?- (= 2 digit) ?- (= 2 digit)))
+           (capture-date-pat (rx (* nonl) (group (= 4 digit) ?- (= 2 digit) ?- (= 2 digit)) (* nonl)))
+           (low-priority-pat (rx "[#Z] "))
+           (closedtodos
+            (sort                   ; sort closed tasks by date closed
+             (seq-filter (lambda (ii) (string-match date-pat (car ii))) todos)
+             (lambda (a b) (string< (replace-regexp-in-string capture-date-pat "\\1" (car b))
+                                    (replace-regexp-in-string capture-date-pat "\\1" (car a))))))
+           (opentodos
+            (sort                       ; sort open tasks by priority
+             (seq-filter (lambda (ii) (not (string-match date-pat (car ii)))) todos)
+             (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
+           (todos (append opentodos closedtodos)))
 
-    (dolist (item todos)                  ; fill in table
-      (when item
-        (setcar item (replace-regexp-in-string "\\[#Z\\] " "" (car item)))
-        (goto-char topleft)
-        (setq colstr (concat "|" (make-string (1+ (cdr item)) ? ) "|"))
-        (search-forward colstr)           ; find col based on number of spaces
-        (forward-char -1)
-        (insert (car item))))
+      (dolist (item todos)                  ; fill in table
+        (when item
+          (setcar item (replace-regexp-in-string low-priority-pat "" (car item)))
+          (goto-char topleft)
+          (setq colstr (concat "|" (make-string (1+ (cdr item)) ? ) "|"))
+          (search-forward colstr)           ; find col based on number of spaces
+          (forward-char -1)
+          (insert (car item)))))
     (goto-char topleft)
     (org-ctrl-c-ctrl-c)))
 
 (defun org-scrum--create-match (owner todos)
   "Get a match string for OWNER and sequence of todo keywords TODOS."
   (when (or owner todos)
-    (let (ownerstr)
-      (setq ownerstr (if owner (concat "OWNER={^" owner ".*}") ""))
+    (let ((ownerstr (if owner (concat "OWNER={^" owner ".*}") "")))
       (if (> (length todos) 0)
           (mapconcat (lambda (ii) (concat ownerstr "+TODO=\"" ii "\"" )) todos "|")
         ownerstr))))
 
 (defun org-dblock-write:block-update-summary (_params)
-  "Generate scrum summary table."
-  (let (developers
+  "Generate developer summary table."
+  (let ((developers (car (org-map-entries 'org-scrum--get-developers "ID=\"TASKS\"")))
         (est  0)                ; hours estimated
         (act  0)                ; actual hours spent
         (done 0)                ; hours of estimates that are done
         (rem  0))               ; hours of estimates that are left
-    (setq developers (car (org-map-entries 'org-scrum--get-developers "ID=\"TASKS\"")))
     (if (= 0 (length developers))
         (error "No developers found (they must have WPD property)"))
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
@@ -261,13 +273,15 @@ Returns (list-of-closed-tasks total-remaining-work)"
 (defun org-scrum--lookup-closed-tasks ()
   "Find tasks which have been closed.
 This returns (time-closed estimated taskid) for each closed task found."
-  (let ((n 0)
-        closetime closestr)
-    (setq closetime (org-entry-get (point) "CLOSED"))
-    (if (null closetime)
-        (error (concat "\"" (nth 4 (org-heading-components)) "\" is marked DONE but doesn't have a CLOSED date")))
-    (setq closestr (parse-time-string closetime))
-    (setq closestr (mapcar (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) closestr)) ; clear time of day
+  (let* ((n 0)
+         (closetime (org-entry-get (point) "CLOSED"))
+         (closestr
+          (if (null closetime)
+              (error (concat "\"" (nth 4 (org-heading-components)) "\" is marked DONE but doesn't have a CLOSED date"))
+            (mapcar
+             (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) ; clear time of day
+             (parse-time-string closetime)))))
+
     ;;(message "%s" (format-time-string "%Y-%m-%d" (apply #'encode-time closestr)))
     (list
      (apply #'encode-time closestr)
@@ -287,11 +301,10 @@ is the total number of story points for the sprint."
     (while (<= day sprintlength)
       (setq cdate (time-add cdate (seconds-to-time 86400))) ; increment current day
       (if (time-less-p cdate today)
-          (let ((toremove nil)
-                (ret (org-scrum--get-work-left cdate closed left)))
-            (setq toremove (car ret) ; save list of completed tasks
-                  left (cdr ret)  ; save new total
-                  closed (seq-remove (lambda (x) (seq-contains toremove x)) closed) ; remove tasks that have been counted
+          (let* ((ret (org-scrum--get-work-left cdate closed left))
+                (toremove (car ret))) ; save list of completed tasks
+            (setq left (cdr ret)      ; save new total
+                  closed (seq-remove (lambda (x) (seq-contains-p toremove x)) closed) ; remove tasks that have been counted
                   actual-burndown (cons (number-to-string left) actual-burndown)))
         (setq actual-burndown (cons "" actual-burndown)))
       (setq day (1+ day)))
@@ -311,7 +324,6 @@ the total number of story points for the sprint."
             ideal-burndown (cons (and (> (nth 6 ctime) 0) (< (nth 6 ctime) 6)) ideal-burndown)
             cdate (time-add cdate (seconds-to-time 86400)) ; increment current day
             day (1+ day)))              ; increment day counter
-    (reverse ideal-burndown)
 
     ;; compute the ideal burndown rate and use it to fill in `ideal-burndown'
     (let* ((count (seq-reduce (lambda (c ii) (if ii (1+ c) c)) ideal-burndown 0)) ; count weekdays
