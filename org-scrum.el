@@ -4,7 +4,7 @@
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -49,14 +49,22 @@
   :type 'boolean
   :group 'org-scrum)
 
-(defcustom org-scrum-board-format 3
+(defcustom org-scrum-board-format "%i. %p %t (%o)"
   "Specify the format of the scrum board items.
+Provide a format string.  Variables are:
+- %i is replaced by the task id
+- %p is replaced by the priority
+- %t is replaced by the task name
+- %o is replaced by the task owner(s)
+- %c is replaced by the close date
+
+legacy formats (deprecated):
 1. \"id\"
 2. \"priority task (closedate)\"
 3. \"id. priority task (closedate)\"
 4. \"id. owner (closedate)\"
 5. \"id. priority task (owner closedate)\""
-  :type 'integer
+  :type 'string
   :group 'org-scrum)
 
 (defcustom org-scrum-ascii-graph t
@@ -158,6 +166,7 @@ total-remaining-work)"
   "Make a scrum board entry from a TODO."
     (let* ((todo (org-entry-get (point) "TODO"))
            (todokwds (append org-not-done-keywords org-done-keywords))
+           (taskid (org-entry-get (point) "TASKID"))
            (hdg (org-scrum--extract-heading))
            (priority (if (nth 3 (org-heading-components)) ; lookup priority
                          (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] "))
@@ -177,11 +186,20 @@ total-remaining-work)"
               closedate (format-time-string "%Y-%m-%d" (apply #'encode-time closestr))
               closedateparens (concat " (" closedate ")")))
       (setq label (cond                 ; scrum board label
-         ((= 1 org-scrum-board-format) (org-entry-get (point) "TASKID"))
-         ((= 2 org-scrum-board-format) (concat priority hdg closedateparens))
-         ((= 3 org-scrum-board-format) (concat (org-entry-get (point) "TASKID") ". " priority hdg closedateparens))
-         ((= 4 org-scrum-board-format) (concat (org-entry-get (point) "TASKID") ". " owner closedateparens))
-         ((= 5 org-scrum-board-format) (concat (org-entry-get (point) "TASKID") ". " priority hdg " (" owner " " closedate ")"))))
+         ((string= "1" org-scrum-board-format) taskid)
+         ((string= "2" org-scrum-board-format) (concat priority hdg closedateparens))
+         ((string= "3" org-scrum-board-format) (concat taskid ". " priority hdg closedateparens))
+         ((string= "4" org-scrum-board-format) (concat taskid ". " (or owner "not assigned") closedateparens))
+         ((string= "5" org-scrum-board-format) (concat taskid ". " priority hdg " (" owner " " closedate ")"))
+         (t (setq label (replace-regexp-in-string "%i" taskid org-scrum-board-format)
+                  label (replace-regexp-in-string "%p" (or (and priority (string-trim priority))  "") label)
+                  label (replace-regexp-in-string "%t" hdg label)
+                  label (replace-regexp-in-string "%o" (or owner "") label)
+                  label (replace-regexp-in-string "%c" (or closedate "") label)))))
+      (setq  label (replace-regexp-in-string (rx (* space) (any "([{") (* space) (any "}])")) "" label) ; clean up empty parens
+             label (replace-regexp-in-string (rx (group (any "([{")) (+ space)) "\\1" label)            ; clean up space after open paren
+             label (replace-regexp-in-string (rx (+ space) (group (any "}])"))) "\\1" label))           ; clean up space before close paren
+
       (if org-scrum-board-links
           (setq label (org-link-make-string (org-link-heading-search-string) label)))
       (cons label indx)))

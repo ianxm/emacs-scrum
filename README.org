@@ -194,14 +194,22 @@
     the content it generates.
 
     - org-scrum-ascii-graph :: if ~t~ export the burndown graph in ascii,
-         else use an embedded svg image.
+         else use an embedded svg image
     - org-scrum-ascii-size :: for ascii burndown graphs, size as (width height)
     - org-scrum-image-size :: for svg burndown graphs, size as (width height)
     - org-scrum-taskid-prefix :: prefix added to taskids. defaults to "T"
     - org-scrum-board-links :: if true, make the items in the scrum board links
-    - org-scrum-board-format :: specify the format of the scrum board items as
-      - 1. id.
-      - 2. priority task (closedate)
-      - 3. id. priority task (closedate)
-      - 4. id. owner (closedate)
-      - 5. id. priority task (owner closedate)
+    - org-scrum-board-format :: specify the format of the scrum board items.
+      this accepts a format string that supports the following replacements
+      - %i :: task id
+      - %p :: priority
+      - %t :: task name
+      - %o :: task owner(s)
+      - %c :: close date
+
+      this still supports the following legacy formats which can be set by number
+      - 1 :: id.
+      - 2 :: priority task (closedate)
+      - 3 :: id. priority task (closedate)
+      - 4 :: id. owner (closedate)
+      - 5 :: id. priority task (owner closedate)
