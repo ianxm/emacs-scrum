@@ -84,12 +84,6 @@
    3. run @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-update-all~
    4. you can export a report using one of the ~org-export-as-*~ commands
 
-** upgrading
-
-   if you're upgrading from version 0.0.x, note that the
-   ~block-update-burndown~ secion is no longer used.  you should
-   remove it from your file.
-
 ** usage
 
 *** scrum org file conventions
@@ -151,7 +145,6 @@
     somewhere in the file.
 
 #+BEGIN_SRC org-mode
-
 #+BEGIN: block-update-board
 #+END:
 
@@ -163,7 +156,6 @@
 
 #+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS"
 #+END:
-
 #+END_SRC
 
 *** updating generated content
@@ -208,8 +200,8 @@
       - %c :: close date
 
       this still supports the following legacy formats which can be set by number
-      - 1 :: id.
-      - 2 :: priority task (closedate)
-      - 3 :: id. priority task (closedate)
-      - 4 :: id. owner (closedate)
-      - 5 :: id. priority task (owner closedate)
+      - 1 :: ~id.~
+      - 2 :: ~priority task (closedate)~
+      - 3 :: ~id. priority task (closedate)~
+      - 4 :: ~id. owner (closedate)~
+      - 5 :: ~id. priority task (owner closedate)~

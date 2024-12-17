@@ -4,7 +4,7 @@
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -33,6 +33,8 @@
 (require 'seq)
 (require 'cl-lib)
 (require 'org)
+
+;; custom variables
 
 (defgroup org-scrum nil
   "Options for customizing scrum reports"
@@ -82,32 +84,97 @@ legacy formats (deprecated):
   :type '(cons number number)
   :group 'org-scrum)
 
+;; dynamically scoped constants and variables and associated helper functions
+
+(defvar org-scrum-developers nil
+  "This is the list of developers as (name . capacity).")
+
+(defvar org-scrum-tasks nil
+  "This is the list of tasks as alists.")
+
+;; functions
+
 (defun org-scrum--get-developers ()
   "Get list of developers as (name . wpd)."
-  (mapcar                                       ; format return value
+  (mapcar                               ; format return value
    (function
     (lambda (ii)
       (cons
        (capitalize (substring (car ii) 4 (length (car ii))))
        (string-to-number (cdr ii)))))
-   (seq-filter                                  ; developer entries
+   (seq-filter                          ; developer entries
     (lambda (ii)
       (and
        (>= (length (car ii)) 5)
        (string= (upcase (substring (car ii) 0 4)) "WPD-")))
     (org-entry-properties (point) 'standard)))) ; entries
 
-(defun org-scrum--get-prop-value (match prop)
-  "Sum values which match MATCH for property PROP in the TASKS tree."
-  (apply
+(defun org-scrum--load-all ()
+  "Load task data into a list of tasks stored as alists."
+  (setq org-scrum-developers (car (org-map-entries 'org-scrum--get-developers "ID=\"TASKS\""))
+        org-scrum-tasks (org-scrum--visit-all-task-todos
+                         #'org-scrum--load-task
+                         "TODO<>\"\"")))
+
+(defun org-scrum--load-task ()
+  "Load the task at point into an alist."
+  ;; taskid, owner, name, priority, state, estimate?, actual?, closedate (later: deps, swimlane)
+  (let* ((state (org-entry-get (point) "TODO"))
+         (taskid (org-entry-get (point) "TASKID"))
+         (name (org-scrum--extract-heading))
+         (priority (if (nth 3 (org-heading-components))
+                       (make-string 1 (nth 3 (org-heading-components)))
+                     "Z"))                      ; default to lowest priority
+         (owner (org-entry-get (point) "OWNER"))
+         (estimated (org-entry-get (point) "ESTIMATED"))
+         (actual (org-entry-get (point) "ACTUAL"))
+         (closed (org-entry-get (point) "CLOSED"))
+         (nn 0)
+         closestr closedate)
+    (unless (null closed)          ; only include closedate for DONE items
+      (setq closestr (mapcar
+                      (function (lambda (ii) (if (< (setq nn (1+ nn)) 4) 0 ii)))
+                      (parse-time-string closed)) ; clear time of day
+            closedate (format-time-string "%Y-%m-%d" (apply #'encode-time closestr))))
+    `((:taskid . ,taskid)
+      (:name . ,name)
+      (:priority . ,priority)
+      (:owner . ,owner)
+      (:state . ,state)
+      (:estimated . ,estimated)
+      (:actual . ,actual)
+      (:closedate . ,closedate))))
+
+(defun org-scrum--aggregate-value (all-tasks owner states prop)
+  "Sum values of property PROP from tasks for OWNER in state STATES in ALL-TASKS."
+  (apply                                ; sum
    #'+
-   (mapcar                                      ; values
+   (mapcar                              ; convert to numbers
     #'string-to-number
-    (seq-filter                                 ; entries with prop
-     (lambda (ii) (> (length ii) 0))
-     (org-scrum--visit-all-task-todos           ; entries
-      (lambda () (org-entry-get (point) prop))
-      match)))))
+    (seq-filter                         ; filter out nils
+     #'identity
+     (mapcar                            ; convert to value
+      (lambda (ii) (alist-get prop ii))
+      (org-scrum--find-tasks all-tasks owner states))))))
+
+(defun org-scrum--find-tasks (all-tasks owner states)
+  "Find tasks for OWNER in state STATES in ALL-TASKS.
+OWNER and STATES will be ignored if nil."
+  (if (or owner states)
+      (seq-filter                   ; filter by owner and state
+       (lambda (ii)
+         (and
+          (if owner
+              (and
+               owner
+               (alist-get :owner ii)
+               (string-match-p owner (alist-get :owner ii)))
+            t)
+          (if states
+              (member (alist-get :state ii) states)
+            t)))
+       all-tasks)
+    all-tasks))
 
 (defun org-scrum--get-finish-date (hours wpd)
   "Count the days to get HOURS work done at WPD hours per day, skipping weekends."
@@ -121,16 +188,21 @@ legacy formats (deprecated):
           (setq hoursleft (- hoursleft wpd))))
     ret))
 
-(defun org-scrum--get-work-left (cdate closed tot)
+(defun org-scrum--get-work-left (cdate closed-tasks tot)
   "Get the actual work remaining for the date CDATE.
-Computes work remaining given the list of closed items CLOSED and
-total hours TOT.  Returns (list-of-closed-tasks
+Computes work remaining given the list of closed items
+CLOSED-TASKS and total hours TOT.  Returns (list-of-closed-tasks .
 total-remaining-work)"
-  (let (toremove)
-    (dolist (item closed)
-      ;; (message "item %s" (format-time-string "%Y-%m-%d %H:%M:%S" (car item)))
-      (unless (time-less-p cdate (nth 0 item))
-        (setq tot (- tot (nth 1 item)))
+  (let (nn closetime toremove)
+    (dolist (item closed-tasks)
+      (setq nn 0
+            closetime (apply #'encode-time
+                             (mapcar
+                              (function (lambda (ii) (if (< (setq nn (1+ nn)) 4) 0 ii))) ; clear time of day
+                              (parse-time-string
+                               (alist-get :closedate item)))))
+      (unless (time-less-p cdate closetime)
+        (setq tot (- tot (string-to-number (alist-get :estimated item))))
         (push item toremove)))
     (cons toremove tot)))
 
@@ -162,121 +234,97 @@ total-remaining-work)"
          (maxlen 30)) ; max length of scrum board task name
     (substring fullhdg 0 (min (length hdg) maxlen))))
 
-(defun org-scrum--make-scrum-board-entry ()
-  "Make a scrum board entry from a TODO."
-    (let* ((todo (org-entry-get (point) "TODO"))
-           (todokwds (append org-not-done-keywords org-done-keywords))
-           (taskid (org-entry-get (point) "TASKID"))
-           (hdg (org-scrum--extract-heading))
-           (priority (if (nth 3 (org-heading-components)) ; lookup priority
-                         (setq priority (concat "[#" (make-string 1 (nth 3 (org-heading-components))) "] "))
-                       "[#Z] "))        ; default to lowest priority
-           (closedate "")               ; close date without parens
-           (closedateparens "")         ; close date with parens
-           (indx (- (length todokwds)
-                    (length (member todo todokwds))))
-           (owner (org-entry-get (point) "OWNER"))
-           (closetime (org-entry-get (point) "CLOSED"))
-           (nn 0)
-           label closestr)
-      (unless (null closetime)          ; only include closedate for DONE items
-        (setq closestr (mapcar
-                        (function (lambda (x) (if (< (setq nn (1+ nn)) 4) 0 x)))
-                        (parse-time-string closetime)) ; clear time of day
-              closedate (format-time-string "%Y-%m-%d" (apply #'encode-time closestr))
-              closedateparens (concat " (" closedate ")")))
-      (setq label (cond                 ; scrum board label
-         ((string= "1" org-scrum-board-format) taskid)
-         ((string= "2" org-scrum-board-format) (concat priority hdg closedateparens))
-         ((string= "3" org-scrum-board-format) (concat taskid ". " priority hdg closedateparens))
-         ((string= "4" org-scrum-board-format) (concat taskid ". " (or owner "not assigned") closedateparens))
-         ((string= "5" org-scrum-board-format) (concat taskid ". " priority hdg " (" owner " " closedate ")"))
-         (t (setq label (replace-regexp-in-string "%i" taskid org-scrum-board-format)
-                  label (replace-regexp-in-string "%p" (or (and priority (string-trim priority))  "") label)
-                  label (replace-regexp-in-string "%t" hdg label)
-                  label (replace-regexp-in-string "%o" (or owner "") label)
-                  label (replace-regexp-in-string "%c" (or closedate "") label)))))
-      (setq  label (replace-regexp-in-string (rx (* space) (any "([{") (* space) (any "}])")) "" label) ; clean up empty parens
-             label (replace-regexp-in-string (rx (group (any "([{")) (+ space)) "\\1" label)            ; clean up space after open paren
-             label (replace-regexp-in-string (rx (+ space) (group (any "}])"))) "\\1" label))           ; clean up space before close paren
+(defun org-scrum--make-scrum-board-label (task)
+  "Make a scrum board entry from the given TASK."
+  (let* ((taskid (alist-get :taskid task))
+         (name (alist-get :name task))
+         (priority (alist-get :priority task))
+         (owner (alist-get :owner task))
+         (closedate (alist-get :closedate task))
+         label)
+    (setq label (cond                 ; scrum board label
+                 ((string= "1" org-scrum-board-format) taskid)
+                 ((string= "2" org-scrum-board-format) (format "[#%s] %s (%s)" priority name closedate))
+                 ((string= "3" org-scrum-board-format) (format "%s. [#%s] %s (%s)" taskid priority name closedate))
+                 ((string= "4" org-scrum-board-format) (format "%s. %s (%s)" taskid (or owner "not assigned") closedate))
+                 ((string= "5" org-scrum-board-format) (format "%s. [#%s] %s (%s %s)" taskid priority name owner closedate))
+                 (t (setq label (replace-regexp-in-string "%i" taskid org-scrum-board-format)
+                          label (replace-regexp-in-string "%p" (or (and priority (string-trim priority))  "") label)
+                          label (replace-regexp-in-string "%t" name label)
+                          label (replace-regexp-in-string "%o" (or owner "") label)
+                          label (replace-regexp-in-string "%c" (or closedate "") label)))))
+    (setq label (replace-regexp-in-string "\\[Z\\] " "" label)                                       ; clean up placeholder low priority
+          label (replace-regexp-in-string (rx (* space) (any "([{") (* space) (any "}])")) "" label) ; clean up empty parens
+          label (replace-regexp-in-string (rx (group (any "([{")) (+ space)) "\\1" label)            ; clean up space after open paren
+          label (replace-regexp-in-string (rx (+ space) (group (any "}])"))) "\\1" label))           ; clean up space before close paren
 
-      (if org-scrum-board-links
-          (setq label (org-link-make-string (org-link-heading-search-string) label)))
-      (cons label indx)))
+
+    (if org-scrum-board-links
+        (setq label (org-link-make-string (org-link-heading-search-string) label)))
+    label))
 
 (defun org-dblock-write:block-update-board (_params)
   "Generate scrum board."
-  (interactive)
-  (let* ((todos                    ; all todos. list of (label . indx)
-          (org-scrum--visit-all-task-todos #'org-scrum--make-scrum-board-entry "TODO<>\"\""))
+  (let* ((loadp (not (and org-scrum-developers org-scrum-tasks)))
          (todokwds                      ; list of all todo keywords
           (append org-not-done-keywords org-done-keywords))
-         (counts                        ; count for each todo kwd
-          (make-list (length todokwds) 0))
-         colstr topleft)
-    (insert "| " (mapconcat #'identity todokwds "|") " |\n|-")
-    (setq topleft (point))
+         tasks-by-state)
+    (when loadp
+      (org-scrum--load-all))
 
-    ;; count the number of scrum board entries in each column
-    (dolist (item todos)
-      (setcar (nthcdr (cdr item) counts)
-              (1+ (nth (cdr item) counts))))
+    (setq tasks-by-state (seq-group-by (lambda (ii) (alist-get :state ii)) org-scrum-tasks))
 
-    (let* ((range (number-sequence 1 (length todokwds))) ; range will be '(1 2 3..)
-           (newrow                                       ; newrow will be "| |  |   |..."
-            (concat "|" (mapconcat (lambda (ii) (make-string ii ? )) range "|") "|")))
-      (goto-char topleft)               ; lay out empty table rows
-      (dotimes (_ii (seq-reduce (lambda (a b) (max a b)) counts 0))
-        (insert (concat "\n" newrow)))) ; different number of spaces for each col
+    ;; set up the table
+    (insert "| " (mapconcat #'identity todokwds "|") "\n|-\n|")
+    (org-table-align)
+    (org-table-analyze)
 
-    (let* ((date-pat (rx (= 4 digit) ?- (= 2 digit) ?- (= 2 digit)))
-           (capture-date-pat (rx (* nonl) (group (= 4 digit) ?- (= 2 digit) ?- (= 2 digit)) (* nonl)))
-           (low-priority-pat (rx "[#Z] "))
-           (closedtodos
-            (sort                   ; sort closed tasks by date closed
-             (seq-filter (lambda (ii) (string-match date-pat (car ii))) todos)
-             (lambda (a b) (string< (replace-regexp-in-string capture-date-pat "\\1" (car b))
-                                    (replace-regexp-in-string capture-date-pat "\\1" (car a))))))
-           (opentodos
-            (sort                       ; sort open tasks by priority
-             (seq-filter (lambda (ii) (not (string-match date-pat (car ii)))) todos)
-             (lambda (a b) (string< (nth 1 (split-string (car a) " ")) (nth 1 (split-string (car b) " "))))))
-           (todos (append opentodos closedtodos)))
+    (dolist (item tasks-by-state)
+      (let* ((state (car item))
+            (index (- (length todokwds)
+                      (length (member state todokwds))
+                      -1))
+            (state-tasks
+             (if (member state org-not-done-keywords)
+                 (sort              ; sort open tasks by priority
+                  (cdr item)
+                  (lambda (a b) (string> (alist-get :priority b)
+                                         (alist-get :priority a))))
+               (sort                ; sort closed tasks by date closed
+                (cdr item)
+                (lambda (a b) (string> (alist-get :closedate b)
+                                       (alist-get :closedate a)))))))
+        (org-table-goto-field (format "@2$%d" index))
+        (dolist (item state-tasks)
+          (unless (eq item (car state-tasks))
+            (org-table-next-row))
+          (let ((label (org-scrum--make-scrum-board-label item)))
+            (insert label)))))
+    (org-table-align)
 
-      (dolist (item todos)                  ; fill in table
-        (when item
-          (setcar item (replace-regexp-in-string low-priority-pat "" (car item)))
-          (goto-char topleft)
-          (setq colstr (concat "|" (make-string (1+ (cdr item)) ? ) "|"))
-          (search-forward colstr)           ; find col based on number of spaces
-          (forward-char -1)
-          (insert (car item)))))
-    (goto-char topleft)
-    (org-ctrl-c-ctrl-c)))
-
-(defun org-scrum--create-match (owner todos)
-  "Get a match string for OWNER and sequence of todo keywords TODOS."
-  (when (or owner todos)
-    (let ((ownerstr (if owner (concat "OWNER={^" owner ".*}") "")))
-      (if (> (length todos) 0)
-          (mapconcat (lambda (ii) (concat ownerstr "+TODO=\"" ii "\"" )) todos "|")
-        ownerstr))))
+    (when loadp
+      (setq org-scrum-developers nil
+            org-scrum-tasks nil))))
 
 (defun org-dblock-write:block-update-summary (_params)
   "Generate developer summary table."
-  (let ((developers (car (org-map-entries 'org-scrum--get-developers "ID=\"TASKS\"")))
+  (let ((loadp (not (and org-scrum-developers org-scrum-tasks)))
         (est  0)                ; hours estimated
         (act  0)                ; actual hours spent
         (done 0)                ; hours of estimates that are done
         (rem  0))               ; hours of estimates that are left
-    (if (= 0 (length developers))
+
+    (when loadp
+      (org-scrum--load-all))
+    (when (= 0 (length org-scrum-developers))
         (error "No developers found (they must have WPD property)"))
+
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
-    (dolist (developer developers)
-      (setq est  (org-scrum--get-prop-value (org-scrum--create-match (car developer) (append org-not-done-keywords org-done-keywords)) "ESTIMATED"))
-      (setq act  (org-scrum--get-prop-value (org-scrum--create-match (car developer) '()) "ACTUAL"))
-      (setq done (org-scrum--get-prop-value (org-scrum--create-match (car developer) org-done-keywords) "ESTIMATED"))
-      (setq rem  (org-scrum--get-prop-value (org-scrum--create-match (car developer) org-not-done-keywords) "ESTIMATED"))
+    (dolist (developer org-scrum-developers)
+      (setq est  (org-scrum--aggregate-value org-scrum-tasks (car developer) (append org-not-done-keywords org-done-keywords) :estimated))
+      (setq act  (org-scrum--aggregate-value org-scrum-tasks (car developer) '()  :actual))
+      (setq done (org-scrum--aggregate-value org-scrum-tasks (car developer) org-done-keywords :estimated))
+      (setq rem  (org-scrum--aggregate-value org-scrum-tasks (car developer) org-not-done-keywords :estimated))
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
@@ -286,46 +334,38 @@ total-remaining-work)"
               " | " (format-time-string "%Y-%m-%d" (org-scrum--get-finish-date rem (cdr developer)))
               " | " (org-scrum--draw-progress-bar est done)
               " |"))
-    (org-ctrl-c-ctrl-c)))
-
-(defun org-scrum--lookup-closed-tasks ()
-  "Find tasks which have been closed.
-This returns (time-closed estimated taskid) for each closed task found."
-  (let* ((n 0)
-         (closetime (org-entry-get (point) "CLOSED"))
-         (closestr
-          (if (null closetime)
-              (error (concat "\"" (nth 4 (org-heading-components)) "\" is marked DONE but doesn't have a CLOSED date"))
-            (mapcar
-             (function (lambda (x) (if (< (setq n (1+ n)) 4) 0 x))) ; clear time of day
-             (parse-time-string closetime)))))
-
-    ;;(message "%s" (format-time-string "%Y-%m-%d" (apply #'encode-time closestr)))
-    (list
-     (apply #'encode-time closestr)
-     (string-to-number (org-entry-get (point) "ESTIMATED"))
-     (org-entry-get (point) "TASKID"))))
+    (org-table-align)
+    (when loadp
+      (setq org-scrum-developers nil
+            org-scrum-tasks nil))))
 
 (defun org-scrum--compute-actual-burndown (start sprintlength tot)
   "Compute actual burndown for each day of the sprint.
 The sprint starts at date START and lasts SPRINTLENGTH days.  TOT
 is the total number of story points for the sprint."
-  (let ((left tot)                      ; total actually left
-        (closed (org-map-entries #'org-scrum--lookup-closed-tasks (org-scrum--create-match nil org-done-keywords))) ; list of (date est num) for each task that was completed
+  (let ((loadp (not org-scrum-tasks))
+        (left tot)                      ; total actually left
         (today (current-time))          ; know when today is because we can't fill in the future burndown
         (cdate start)                   ; the date of the current date as we iterate
         (day 0)                         ; counts the days as we iterate
+        closed-tasks
         actual-burndown)                ; the list of burndown by day
+    (when loadp
+      (org-scrum--load-all))
+    (setq closed-tasks (org-scrum--find-tasks org-scrum-tasks nil org-done-keywords))
     (while (<= day sprintlength)
       (setq cdate (time-add cdate (seconds-to-time 86400))) ; increment current day
       (if (time-less-p cdate today)
-          (let* ((ret (org-scrum--get-work-left cdate closed left))
+          (let* ((ret (org-scrum--get-work-left cdate closed-tasks left))
                 (toremove (car ret))) ; save list of completed tasks
             (setq left (cdr ret)      ; save new total
-                  closed (seq-remove (lambda (x) (seq-contains-p toremove x)) closed) ; remove tasks that have been counted
+                  closed-tasks (seq-remove (lambda (ii) (seq-contains-p toremove ii)) closed-tasks) ; remove tasks that have been counted
                   actual-burndown (cons (number-to-string left) actual-burndown)))
         (setq actual-burndown (cons "" actual-burndown)))
       (setq day (1+ day)))
+    (when loadp
+      (setq org-scrum-developers nil
+            org-scrum-tasks nil))
     (reverse actual-burndown)))
 
 (defun org-scrum--compute-ideal-burndown (start sprintlength tot)
@@ -344,7 +384,7 @@ the total number of story points for the sprint."
             day (1+ day)))              ; increment day counter
 
     ;; compute the ideal burndown rate and use it to fill in `ideal-burndown'
-    (let* ((count (seq-reduce (lambda (c ii) (if ii (1+ c) c)) ideal-burndown 0)) ; count weekdays
+    (let* ((count (seq-reduce (lambda (cc ii) (if ii (1+ cc) cc)) ideal-burndown 0)) ; count weekdays
            (rate  (/ (float tot) count))
            (left tot))
       (dotimes (day (length ideal-burndown))
@@ -356,15 +396,18 @@ the total number of story points for the sprint."
 (defun org-scrum--compute-burndown ()
   "Compute ideal and actual burndown for each day of the sprint.
 Returns a list of (date actual ideal)."
-  (let* ((tot (org-scrum--get-prop-value nil "ESTIMATED")) ; total estimated hours
+  (let* ((tot (org-scrum--aggregate-value org-scrum-tasks nil nil :estimated)) ; total estimated hours
          cdate                 ; current date for iterating
          sprintlength)         ; number of calendar days in the sprint
 
     ;; look up start date and sprint length
     (org-map-entries (lambda ()
-                       (setq cdate (time-subtract (apply #'encode-time (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART"))))
-                                                  (seconds-to-time 86400))) ; day before sprint start
-                       (setq sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
+                       (setq cdate (time-subtract
+                                    (apply
+                                     #'encode-time
+                                     (org-fix-decoded-time (parse-time-string (org-entry-get (point) "SPRINTSTART"))))
+                                    (seconds-to-time 86400)) ; day before sprint start
+                             sprintlength (string-to-number (org-entry-get (point) "SPRINTLENGTH"))))
                      "ID=\"TASKS\"")
     (if (or (null cdate) (null sprintlength))
         (error "Couldn't find node with ID=\"TASKS\" containing \"SPRINTLENGTH\" and \"SPRINTSTART\" properties"))
@@ -471,8 +514,8 @@ system. The result is the file \"scrum_cards.pdf\"."
 \\pagestyle{empty}
 \\twocolumn
 \n"
-                                (mapconcat #'identity
-                                           (org-scrum--visit-all-task-todos #'org-scrum--generate-task-card "TODO<>\"\"")
+                                (mapconcat #'org-scrum--generate-task-card
+                                           org-scrum-tasks
                                            "\n")
                                 "\n\\end{document}\n"))
       (with-temp-file "scrum_cards.tex"
@@ -480,14 +523,11 @@ system. The result is the file \"scrum_cards.pdf\"."
       (shell-command "texi2pdf scrum_cards.tex"
                      (get-buffer-create "*Standard output*")))))
 
-(defun org-scrum--generate-task-card ()
-  (let* ((hdg (nth 4 (org-heading-components)))
-         (bracket (string-match "\\[" hdg))               ; index of bracket character
-         (id (or (org-entry-get (point) "TASKID") "\\_\\_\\_"))
-         (owner (or (org-entry-get (point) "OWNER") "\\_\\_\\_"))
-         (est (or (org-entry-get (point) "ESTIMATED") "\\_\\_\\_")))
-    (if bracket
-        (setq hdg (substring hdg 0 (1- bracket))))
+(defun org-scrum--generate-task-card (task)
+  (let* ((name (alist-get :name task))
+         (id (or (alist-get :taskid task) "\\_\\_\\_"))
+         (owner (or (alist-get :owner task) "\\_\\_\\_\\_\\_"))
+         (est (or (alist-get :estimated task) "\\_\\_\\_")))
     (format "
 \\vspace{0.4in}
 \\filbreak
@@ -497,13 +537,16 @@ system. The result is the file \"scrum_cards.pdf\"."
   \\hline
   \\multicolumn{2}{p{\\columnwidth}}{%s} \\\\
 \\end{tabular}
-" est id owner hdg)))
+" est id owner name)))
 
 ;;;###autoload
 (defun org-scrum-update-all ()
   "Update all dynamic blocks in a scrum org file."
   (interactive)
   (save-excursion
+
+    (org-scrum--load-all)
+
     (let (found)
       (goto-char (point-min))
       (setq found (re-search-forward "#\\+BEGIN: columnview .* :id \"TASKS\"" nil t))
@@ -524,7 +567,10 @@ system. The result is the file \"scrum_cards.pdf\"."
       (setq found (re-search-forward "#\\+BEGIN: block-update-graph" nil t))
       (if (not found)
           (error "\"block-update-graph\" not found"))
-      (org-ctrl-c-ctrl-c))))
+      (org-ctrl-c-ctrl-c))
+
+    (setq org-scrum-developers nil
+          org-scrum-tasks nil)))
 
 (provide 'org-scrum)
 
