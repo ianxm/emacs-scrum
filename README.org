@@ -27,18 +27,20 @@
 
    org-scrum.el generates the following:
 
-   a scrum board made up of the tasks arranged in columns based on
-   their TODO status.  scrum board labels can be plain text or links to
-   the items in the tree.
+   a SCRUM BOARD made up of the tasks arranged in columns based on
+   their TODO status.  scrum board labels can be plain text or links
+   to where the items are defined in the document.
 
-   the SUMMARY table (example section 2.1) provides the following info
-   for each developer:
+   the DEVELOPER SUMMARY table (example section 2.1) provides the
+   following info for each developer:
    - ESTIMATED :: total estimated time of their tasks
    - ACTUAL :: total actual time they spent
    - DONE :: sum of estimated time for tasks they've completed
-   - REMAINING :: sum of estimated time for tasks not yet completed
+   - REMAINING :: sum of estimated time for tasks assigned but not yet
+     completed
    - PENCILS DOWN :: date on which they expect to complete their tasks
-   - PROGRESS :: percent of their tasks that are done
+   - PROGRESS :: progress bar showing percent of their tasks that are
+     done
 
    the BURNDOWN CHART (example section 2.2) shows actual progress
    against a smooth completion rate.  the burndown chart can be ascii
@@ -52,8 +54,16 @@
    - TASKID :: identifier for the task
    - OWNER :: list of developers that are assigned to the task.  the
      first name is considered the owner.
+   - PRIORITY :: priority assigned to the task
+   - TODO :: the task's scrum board status
    - ESTIMATED :: hours the task owner thinks the task will require
    - ACTUAL :: hours spent on the task
+
+   the SPRINT PLANNING table uses developer capacity and points
+   completed to calculate the team's velocity.  velocity is the
+   average number of estimated hours completed over the last six
+   sprints.  then it uses velocity to estimate how many points can
+   reasonably be completed next sprint.
 
    for convenience, org-scrum.el also defines a command
    (@@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-reset-taskids~) that
@@ -84,65 +94,125 @@
    3. run @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-update-all~
    4. you can export a report using one of the ~org-export-as-*~ commands
 
-** usage
+** upgrading
+*** breaking changes
 
+    there were breaking changes from 0.1.x to 0.2.0.  the recommended
+    approach to upgrading is to start from a new template.
+
+*** functional changes from version 0.1.x
+
+    before version 0.2.0 the entire ~org-scrum~ file was for a single
+    sprint.  all tasks were assigned to that sprint and developer
+    capacity was fixed.
+
+    with version 0.2.0 ~org-scrum~ tracks tasks and progress through
+    multiple sprints.  tasks can be assigned to sprints and are
+    cleared from the sprint board when they are completed and the next
+    sprint begins.  developers can provide capacity numbers for future
+    sprints which, along with velocity calculations, enable ~org-scrum~
+    to project how much should get done in the upcoming sprint.
+
+*** file structural changes from 0.1.x
+
+    before 0.2.0 ~sprintlength~, ~sprintstart~ and the list of
+    developers and their capacities (which was called ~wpd~) were saved
+    as properties in the ~TASKS~ headline.  these have been moved out
+    into the ~#+CONSTANTS~ parameter and ~capacity~ table.
+
+    before 0.2.0 the burndown chart block name was ~block-update-graph~.
+    it has been renamed ~block-update-burndown~.
+
+    property drawers containing ~CUSTOM_ID~ were added to each of the
+    report sections.
+
+** usage
 *** scrum org file conventions
 
     there are several things that org-scrum.el expects to find in the
     org file on which it is running.  if something is missing, it will
-    let you know.
+    let you know.  it is best to start from the example template, but
+    the requirements are described in this section.
 
 **** boilerplate header block
 
-     add this block at the top of the file.  it defines some
-     parameters that org-mode uses when it exports, defines the TODO
-     states here, and creating the OWNER, ESTIMATED, and ACTUAL
-     properties for tasks.
+    add this block at the top of the file.  it defines some parameters
+    that org-mode uses when it exports.
 
 #+BEGIN_SRC org-mode
 #+TITLE: [your report title]
 #+AUTHOR: [your name]
 #+EMAIL: [your email address]
-#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+}
 #+END_SRC
 
-     the columns of the scrum board are based on the TODO keywords,
-     which can be set in the header as well.
+    this line defines the TODO states, which will also be the columns
+    of the scrum board.  modify this line to add or remove scrum board
+    columns.
 
 #+BEGIN_SRC org-mode
 #+TODO: TODO STARTED | DONE DEFERRED
 #+END_SRC
 
-**** meta data
+    this line defines the columns that will be included in the TASK
+    LIST report.  these are also the task properties and the columns
+    that will be shown for the tasks tree when in columnview mode.
+    the columns are described below in the tasks bullet in the section
+    on metadata.  it is safe to rearrange these items but removing
+    something might break some reports.
 
-     to generate the report artifacts, org-scrum.el needs to know where
-     to find your task data, how many developers are on the team, and
-     the sprint schedule.  we'll add all those things as properties of
-     the root headline of the tasks tree.
+#+BEGIN_SRC org-mode
+#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+} %SPRINT %DEPS %SWIMLANE
+#+END_SRC
 
-     1. the root headline must have the following properties:
-        - ID :: set to "TASKS"
-        - SPRINTLENGTH :: the number of days in the sprint
-        - SPRINTSTART :: the date on which the sprint begins
-     2. the root headline must have a property for each developer
-        specifying their name and the number of hours per day they
-        expect to work on this project.  names should be prefixed with
-        "wpd-".  for example, ":wpd-ian: 3" mean ian is expecting to
-        work on this project for 3 hours per day.
-     3. tasks (headlines with TODO's) should have OWNER ESTIMATED and
-        ACTUAL properties.
-        - OWNER :: list of space delimited developer names.  the
+    this line provides some styling to reports exported to HTML.
+
+#+BEGIN_SRC org-mode
+#+HTML_HEAD: <style>table { width: 100%; border: 1px solid; } th, td { border: 1px solid; } table th { background-color: #f2f2f2; } div#outline-container-summary table td:last-child { font-family: monospace; text-align: center; } div#outline-container-capacity table tbody:last-child { font-weight: bold; background-color: #f2f2f2; }</style>
+#+END_SRC
+
+**** metadata
+
+     to generate the report artifacts, org-scrum.el needs to know
+     where to find your task data, how many developers are on the
+     team, and the sprint schedule.  to accomplish this,
+
+     1. the root headline must have a property ~ID~ which is set to
+        "TASKS"
+     2. there must be a ~#+CONSTANTS:~ entry that sets
+        - sprintlength :: the number of days in the sprint
+        - sprintnum :: the number of the current sprint
+     3. there must be a ~capacity~ table with the rows
+        - sprint :: sprint number
+        - start :: the date on which that sprint begins
+        - developers :: hours of daily capacity for each sprint
+        - total :: total capacity
+     4. tasks (headlines with TODO's) should have several properties
+        that ~org-scrum~ uses to build its reports.  use
+        @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-columns~ to easily view
+        and edit these properties.
+        - TASKID :: a unique identifier for each task
+        - OWNER :: a space delimited list of developers names.  the
           first name is considered the owner of the task.
         - ESTIMATED :: a task owner's time estimate in hours
         - ACTUAL :: the number of actual hours spent
+        - SPRINT :: the number of the sprint to which this task is
+          assigned
+        - DEPS :: a space delimited list of TASKIDs on which this task
+          depends
+        - SWIMLANE :: assign tasks to different swimlanes to indicate
+          where there are consecutive steps that can be taken by
+          different developers or teams.
 
 **** report blocks
 
-    the generated content is written to dynamic blocks embedded in
-    the same org file on which it is operating.  org-mode needs those
-    blocks to have BEGIN and END statements so that it knows where to
-    write the generated content.  to that end, this needs to be
-    somewhere in the file.
+    the generated content is written to dynamic blocks embedded in the
+    same org buffer in which it is operating.  org-mode needs those
+    blocks to have ~#+BEGIN~ and ~#+END~ statements so that it knows where
+    to write the generated content.  to that end, this needs to be
+    somewhere in the file for each report.  however, the order that
+    they occur in the file doesn't matter and all report sections are
+    optional.  if a report block is not found in the buffer,
+    ~org-scrum-update-all~ will skip them.
 
 #+BEGIN_SRC org-mode
 #+BEGIN: block-update-board
@@ -158,19 +228,52 @@
 #+END:
 #+END_SRC
 
+**** schedule and capacity table
+
+    the schedule and capacity section contains two important things.
+
+    the ~sprintlength~ and ~sprintnum~ constants can be updated directly.
+    simply edit them inline and use @@html:<kbd>@@C-c
+    C-c@@html:</kbd>@@ to load the setting.
+
+    the ~capacity~ table can be used to add or remove sprints by adding
+    or removing columns.  the first row identifies the sprint number
+    and is autogenerated (changes will be overwritten).  you can also
+    set sprint start dates by editing the second row (changes here
+    will not be overwritten).  alternatively if you blank cells in the
+    second row and run the table formula it will fill them in by
+    adding ~sprintlength~ days to the previous sprint start date.  you
+    have to set the first sprint's start date.
+
+    you can also use it to add or remove developers by adding or
+    removing rows in the center section between the hlines.  finally,
+    the ~capcity~ table can be used to set developer capacity by filling
+    in the numbers in the sprint rows between the hlines.  capacity is
+    in hours of work per week.  running the table formula will
+    recalculate the total, but you don't have to do this manually
+    since it is done automatically by ~org-scrum-update-all~.  you can
+    run the table formula by hitting @@html:<kbd>@@C-c
+    C-c@@html:</kbd>@@ on the ~TBLFM:~ line at the bottom of the table.
+
 *** updating generated content
 
     generated content can be updated by running
     @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-update-all~
 
     alternatively, individual blocks can be updated by doing a
-    @@html:<kbd>@@C-c C-c@@html:</kbd>@@ with the point on a dynamic
-    block ~#+BEGIN~ line.
+    @@html:<kbd>@@C-c C-c@@html:</kbd>@@ with the point on the ~#+BEGIN~
+    line at the top of the block.
 
-    @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-reset-taskids~ will
-    set all task id's to consecutive values for the tree at the point.
+    run @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-start-next-sprint~
+    to start the next sprint.  this command will increment the current
+    sprint number and reassign all of the stories that are in the
+    current sprint and not done to the new sprint.
+
+    @@html:<kbd>@@M-x@@html:</kbd>@@ ~org-scrum-reset-taskids~ will set
+    all task id's to consecutive values for the tree at the point.
     the values are two digits starting from one and prefixed with the
-    string given by the variable ~org-scrum-taskid-prefix~.
+    string given by the variable ~org-scrum-taskid-prefix~.  this is
+    deprecated and will be altered or removed in future versions.
 
 *** scrum cards
 

@@ -2,68 +2,114 @@
 #+AUTHOR: youname
 #+EMAIL: youemail@domain.com
 #+TODO: TODO STARTED | DONE DEFERRED
-#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+}
+#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+} %SPRINT %DEPS %SWIMLANE
+#+HTML_HEAD: <style>table { width: 100%; border: 1px solid; } th,td { border-left: 1px solid;border-right: 1px solid; } th { background-color: #f2f2f2; } div#outline-container-summary table td:last-child { font-family: monospace; text-align: center; } div#outline-container-capacity table tbody:last-child { font-weight: bold; background-color: #f2f2f2; }</style>
 
 * REPORTS
+#+begin_src note :exports none
+These tables are generated. Edits will be lost.
+#+end_src
 ** SCRUM BOARD
+:PROPERTIES:
+:CUSTOM_ID: board
+:END:
 #+BEGIN: block-update-board
-| TODO                                 | STARTED | DONE | DEFERRED |
-|--------------------------------------+---------+------+----------|
-| S1.01. [#A] name of task1 (devname1) |         |      |          |
-| S1.02. [#B] name of task2 (devname2) |         |      |          |
+| TODO                              | STARTED | DONE | DEFERRED |
+|-----------------------------------+---------+------+----------|
+| T01. [A] name of task1 (devname1) |         |      |          |
+| T02. [B] name of task2 (devname2) |         |      |          |
 #+END:
 ** DEVELOPER SUMMARY
+:PROPERTIES:
+:CUSTOM_ID: summary
+:END:
 #+BEGIN: block-update-summary
 | NAME     | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |----------+-----------+--------+------+-----------+--------------+------------|
-| devname1 |         4 |      1 |    0 |         4 |   2014-11-05 | ---------- |
-| devname2 |         4 |      0 |    0 |         4 |   2014-11-04 | ---------- |
+| devname1 |         4 |      1 |    0 |         4 |   2024-12-25 | ---------- |
+| devname2 |         4 |      0 |    0 |         4 |   2024-12-26 | ---------- |
 #+END:
 ** BURNDOWN CHART
-#+BEGIN: block-update-graph
+:PROPERTIES:
+:CUSTOM_ID: burndown
+:END:
+#+BEGIN: block-update-burndown
 :
-:                                   Burndown
 :
-:  8 +----#---+---------+--------+---------+--------+---------+--------+----+
-:    |                                                        ACTUAL ###### |
-:  7 +    ........                                             IDEAL ...... +
-:    |            .                                                         |
-:  6 +             ........                                                 +
-:    |                     ..                                               |
-:    |                                                                      |
-:  5 +                       ........                                       +
-:    |                               .                                      |
-:  4 +                                .........                             +
-:    |                                         .                            |
-:  3 +                                          ........                    +
-:    |                                                  .                   |
-:  2 +                                                   ........           +
-:    |                                                           ..         |
-:    |                                                                      |
-:  1 +                                                             ........ +
-:    |                                                                     .|
-:  0 +--------+---------+--------+---------+--------+---------+--------+----.
-:    0        2         4        6         8        10        12       14
+:                                               Burndown
+:     8 +----------------------------------------------------------------------------------------+
+:       |      + ....        +            +             +             +            +             |
+:       |            ...                                                          actual ******* |
+:     7 |-+             ..                                                         ideal .......-|
+:       |                 ..                                                                     |
+:       |                   ...                                                                  |
+:     6 |-+                    ...                                                             +-|
+:       |                         ...                                                            |
+:       |                            ....                                                        |
+:     5 |-+                              ...                                                   +-|
+:       |                                   ....                                                 |
+:     4 |-+                                     .................                              +-|
+: hrs   |                                                        ..                              |
+:       |                                                          ..                            |
+:     3 |-+                                                          ...                       +-|
+:       |                                                               ...                      |
+:       |                                                                  ...                   |
+:     2 |-+                                                                   ....             +-|
+:       |                                                                         ...            |
+:       |                                                                            ..          |
+:     1 |-+                                                                            ..      +-|
+:       |                                                                                ...     |
+:       |      +             +            +             +             +            +        .... |
+:     0 +----------------------------------------------------------------------------------------+
+:              2             4            6             8             10           12            14
+:                                             day of sprint
 :
 :
 #+END:
 ** TASK LIST
-#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS"
-| ITEM              | TASKID | OWNER    | PRIORITY | TODO | ESTIMATED | ACTUAL |
-|-------------------+--------+----------+----------+------+-----------+--------|
-| * TASKS           |        |          |          |      |         8 |      1 |
-|-------------------+--------+----------+----------+------+-----------+--------|
-| ** CATEGORY       |        |          |          |      |         8 |      1 |
-| *** name of task1 | S1.01  | devname1 | A        | TODO |         4 |      1 |
-| *** name of task2 | S1.02  | devname2 | B        | TODO |         4 |        |
+:PROPERTIES:
+:CUSTOM_ID: tasklist
+:END:
+#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS" :match "SPRINT=1"
+| ITEM          | TASKID | OWNER    | PRIORITY | TODO | ESTIMATED | ACTUAL | SPRINT | DEPS | SWIMLANE |
+|---------------+--------+----------+----------+------+-----------+--------+--------+------+----------|
+| name of task1 | T01    | devname1 | A        | TODO |         4 |      1 |      1 |      |          |
+| name of task2 | T02    | devname2 | B        | TODO |         4 |        |      1 |      |          |
 #+END:
-* TASKS
+** SPRINT PLANNING
+:PROPERTIES:
+:CUSTOM_ID: planning
+:END:
+#+NAME: projections
+| sprint    | 1 | 2 | 3 |  4 | 5 |  6 |  7 |  8 |
+|-----------+---+---+---+----+---+----+----+----|
+| capacity  | 9 | 9 | 5 | 10 | 7 | 10 | 10 | 10 |
+| completed |   |   |   |    |   |    |    |    |
+| velocity  |   |   |   |    |   |    |    |    |
+| projected | - |   |   |    |   |    |    |    |
+#+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@2$<<..@2$>=remote(capacity,@>$$#)::@4$2=if("@2$0"=="nan"||"@3$0"=="nan",string(""),@3/@2);E f-1::@4$3..@4$>=if("@2$0"=="nan"||"@3$0"=="nan",string(""),vmean(map(div,subvec(@3$2..@3$0,1,7),subvec(@2$2..@2$0,1,7)));E f-1::@5$2=string("-")::@5$3..@5$>=if("@4$-1"=="nan",string(""),round(@4$-1*@2));E f-1
+
+* SCHEDULE AND CAPACITY
+:PROPERTIES:
+:CUSTOM_ID: capacity
+:END:
+
+#+CONSTANTS: sprintlength=14 sprintnum=1
+
+#+NAME: capacity
+| sprint   |          1 |          2 |          3 |          4 |          5 |          6 |          7 |          8 |
+| start    | 2012-10-02 | 2012-10-16 | 2012-10-30 | 2012-11-12 | 2012-11-26 | 2012-12-10 | 2012-12-24 | 2013-01-07 |
+|----------+------------+------------+------------+------------+------------+------------+------------+------------|
+| devname1 |          6 |          5 |          5 |          5 |          3 |          5 |          5 |          5 |
+| devname2 |          3 |          4 |            |          5 |          4 |          5 |          5 |          5 |
+|----------+------------+------------+------------+------------+------------+------------+------------+------------|
+| total    |          9 |          9 |          5 |         10 |          7 |         10 |         10 |         10 |
+#+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@6$<<..@6$>=vsum(@3..@>>)::@2$3..@2$>='(if(string= $0 "")(format-time-string "%Y-%m-%d" (org-scrum--increment-date(date-to-time $-1)$sprintlength))$0)
+
+* TASKS                                                            :noexport:
   :PROPERTIES:
   :ID:       TASKS
-  :SPRINTLENGTH: 15
-  :SPRINTSTART: <2014-11-03 Mon>
-  :wpd-devname1:      3
-  :wpd-devname2:    4
+  :SPRINT:
   :END:
 ** CATEGORY A
 *** TODO [#A] name of task1
@@ -71,7 +117,8 @@
     :ESTIMATED: 4
     :ACTUAL:   1
     :OWNER:    devname1
-    :TASKID:   S1.01
+    :TASKID:   T01
+    :SPRINT:   1
     :END:
     description of task1
 *** TODO [#B] name of task2
@@ -79,10 +126,11 @@
     :ESTIMATED: 4
     :ACTUAL:
     :OWNER:    devname2
-    :TASKID:   S1.02
+    :TASKID:   T02
+    :SPRINT:   1
     :END:
     description of task2
-* BACKLOG
+* BACKLOG                                                          :noexport:
 ** CATEGORY A
 *** TODO name of backlog task1
     description of backlog task1

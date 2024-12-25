@@ -2,162 +2,202 @@
 #+AUTHOR: ian
 #+EMAIL: ianxm@jhu.edu
 #+TODO: TODO STARTED | DONE DEFERRED
-#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+}
+#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+} %SPRINT %DEPS %SWIMLANE
+#+HTML_HEAD: <style>table { width: 100%; border: 1px solid; } th,td { border-left: 1px solid;border-right: 1px solid; } th { background-color: #f2f2f2; } div#outline-container-summary table td:last-child { font-family: monospace; text-align: center; } div#outline-container-capacity table tbody:last-child { font-weight: bold; background-color: #f2f2f2; }</style>
 
 * REPORTS
+#+begin_src note :exports none
+These tables are generated. Edits will be lost.
+#+end_src
 ** SCRUM BOARD
+:PROPERTIES:
+:CUSTOM_ID: board
+:END:
 #+BEGIN: block-update-board
-| TODO                          | STARTED             | DONE                                          | DEFERRED                           |
-|-------------------------------+---------------------+-----------------------------------------------+------------------------------------|
-| T11. add license to src files | T12. [#C] write doc | T10. [#B] create scrum board (2012-12-05)     | T01. [#B] learn elisp (2012-12-08) |
-| T13. post to github           |                     | T09. [#C] create burndown chart (2012-12-02)  |                                    |
-|                               |                     | T07. [#A] create summary table (2012-12-01)   |                                    |
-|                               |                     | T08. [#B] create burndown list (2012-12-01)   |                                    |
-|                               |                     | T04. [#A] write example org file (2012-11-29) |                                    |
-|                               |                     | T03. [#A] set up project folder (2012-11-28)  |                                    |
-|                               |                     | T06. [#A] create task list table (2012-11-28) |                                    |
-|                               |                     | T02. learn org mode (2012-11-27)              |                                    |
-|                               |                     | T05. [#A] draw up reports ui's (2012-11-27)   |                                    |
+| TODO                                    | STARTED                  | DONE                                  | DEFERRED |
+|-----------------------------------------+--------------------------+---------------------------------------+----------|
+| T11. [C] add license to src files (wil) | T12. [C] write doc (ian) | T09. [C] create burndown chart (ian)  |          |
+|                                         |                          | T07. [A] create summary table (kevin) |          |
 #+END:
 ** DEVELOPER SUMMARY
+:PROPERTIES:
+:CUSTOM_ID: summary
+:END:
 #+BEGIN: block-update-summary
 | NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |-------+-----------+--------+------+-----------+--------------+------------|
-| Ian   |        32 |     38 |   32 |         0 |   2020-01-01 | ########## |
-| Kevin |         7 |      9 |    6 |         1 |   2020-01-02 | #########- |
-| Wil   |        17 |     10 |   13 |         4 |   2020-01-03 | ########-- |
+| ian   |        13 |      5 |   10 |         3 |   2024-12-25 | ########-- |
+| kevin |         5 |      8 |    5 |         0 |   2024-12-24 | ########## |
+| wil   |         1 |      0 |    0 |         1 |   2024-12-25 | ---------- |
 #+END:
 ** BURNDOWN CHART
-#+BEGIN: block-update-graph
+:PROPERTIES:
+:CUSTOM_ID: burndown
+:END:
+#+BEGIN: block-update-burndown
 :
-:                                                 Burndown
 :
-:        60 +------------------------------------------------------------------------------------+
-:           |      +            +            +            +            +            +            |
-:           |***                                                                   ideal ....... |
-:           |...**                                                                actual ******* |
-:        50 |-+   *                                                                            +-|
-:           |      *****.                                                                        |
-:           |           *......                                                                  |
-:           |            *******                                                                 |
-:        40 |-+                 *********                                                      +-|
-:           |                         ...*..                                                     |
-:           |                             * .                                                    |
-:        30 |-+                            **......                                            +-|
-:           |                                      ......                                        |
-:           |                                ***         .                                       |
-:           |                                   *         ......                                 |
-:        20 |-+                                  **             ......                         +-|
-:           |                                                         .                          |
-:           |                                      *****************   ......                    |
-:           |                                                       **       ......              |
-:        10 |-+                                                       *            .           +-|
-:           |                                                          *******************       |
-:           |                                                                             *******|
-:           |      +            +            +            +            +            +           .|
-:         0 +------------------------------------------------------------------------------------+
-:                  2            4            6            8            10           12           14
-:                                                    day
+:                                                Burndown
+:     20 +---------------------------------------------------------------------------------------+
+:        |........**************************            +             +            +             |
+:     18 |-+      ....                      *                                     actual *******-|
+:        |            ..                    *                                      ideal ....... |
+:        |              ..                   *                                                   |
+:     16 |-+              ..                 *                                                 +-|
+:        |                  ...               *                                                  |
+:     14 |-+                   ....            *                                               +-|
+:        |                         ...         *                                                 |
+:     12 |-+                          ....      *                                              +-|
+:        |                                ...   *                                                |
+:     10 |-+                                 ....*                                             +-|
+: hrs    |                                       ................                                |
+:        |                                        ***************....**                          |
+:      8 |-+                                                         ...*                      +-|
+:        |                                                              ....                     |
+:      6 |-+                                                              * ..                 +-|
+:        |                                                                 ** ..                 |
+:      4 |-+                                                                 ***..***************|
+:        |                                                                        ...            |
+:        |                                                                           ....        |
+:      2 |-+                                                                             ...   +-|
+:        |      +            +             +            +             +            +        .... |
+:      0 +---------------------------------------------------------------------------------------+
+:               2            4             6            8             10           12            14
+:                                              day of sprint
 :
 :
 #+END:
 ** TASK LIST
-#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS"
-| ITEM                             | TASKID | OWNER     | PRIORITY | TODO     | ESTIMATED | ACTUAL |
-|----------------------------------+--------+-----------+----------+----------+-----------+--------|
-| * TASKS                          |        |           |          |          |        56 |     57 |
-|----------------------------------+--------+-----------+----------+----------+-----------+--------|
-| ** RESEARCH                      |        |           |          |          |         8 |     14 |
-| *** learn elisp                  | T01    | ian       | B        | DEFERRED |         4 |     10 |
-| *** learn org mode               | T02    | ian       |          | DONE     |         4 |      4 |
-|----------------------------------+--------+-----------+----------+----------+-----------+--------|
-| ** ENVIRONMENT                   |        |           |          |          |         4 |      4 |
-| *** set up project folder [3/3]  | T03    | kevin     | A        | DONE     |         1 |      1 |
-| *** write example org file       | T04    | wil       | A        | DONE     |         3 |      3 |
-|----------------------------------+--------+-----------+----------+----------+-----------+--------|
-| ** DESIGN                        |        |           |          |          |         4 |      3 |
-| *** draw up reports ui's         | T05    | wil       | A        | DONE     |         4 |      3 |
-|----------------------------------+--------+-----------+----------+----------+-----------+--------|
-| ** CODING                        |        |           |          |          |        35 |     35 |
-| *** create task list table [2/2] | T06    | wil kevin | A        | DONE     |         6 |      3 |
-| *** create summary table         | T07    | kevin     | A        | DONE     |         5 |      8 |
-| *** create burndown list         | T08    | ian       | B        | DONE     |         8 |     12 |
-| *** create burndown chart        | T09    | ian wil   | C        | DONE     |        10 |      4 |
-| *** create scrum board           | T10    | ian       | B        | DONE     |         6 |      8 |
-|----------------------------------+--------+-----------+----------+----------+-----------+--------|
-| ** PUBLISH                       |        |           |          |          |         5 |      1 |
-| *** add license to src files     | T11    | wil       |          | TODO     |         1 |        |
-| *** write doc                    | T12    | wil       | C        | STARTED  |         3 |      1 |
-| *** post to github [0/2]         | T13    | kevin ian |          | TODO     |         1 |        |
+:PROPERTIES:
+:CUSTOM_ID: tasklist
+:END:
+#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS" :match "SPRINT=3"
+| ITEM                     | TASKID | OWNER | PRIORITY | TODO    | ESTIMATED | ACTUAL | SPRINT | DEPS | SWIMLANE |
+|--------------------------+--------+-------+----------+---------+-----------+--------+--------+------+----------|
+| create summary table     | T07    | kevin | A        | DONE    |         5 |      8 |      3 | T06  |        1 |
+| create burndown chart    | T09    | ian   | C        | DONE    |        10 |      4 |      3 | T08  |        1 |
+| add license to src files | T11    | wil   | C        | TODO    |         1 |        |      3 | T03  |        2 |
+| write doc                | T12    | ian   | C        | STARTED |         3 |      1 |      3 | T05  |        2 |
 #+END:
+** SPRINT PLANNING
+:PROPERTIES:
+:CUSTOM_ID: planning
+:END:
+#+NAME: projections
+| sprint    |   1 |   2 |   3 |  4 |    5 |  6 |
+|-----------+-----+-----+-----+----+------+----|
+| capacity  |  14 |  13 |  11 | 14 | 10.5 | 10 |
+| completed |  19 |  20 |  15 |    |      |    |
+| velocity  | 1.4 | 1.4 | 1.4 |    |      |    |
+| projected |   - |  18 |  15 | 20 |      |    |
+#+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@2$<<..@2$>=remote(capacity,@>$$#)::@4$2=if("@2$0"=="nan"||"@3$0"=="nan",string(""),@3/@2);E f-1::@4$3..@4$>=if("@2$0"=="nan"||"@3$0"=="nan",string(""),vmean(map(div,subvec(@3$2..@3$0,1,7),subvec(@2$2..@2$0,1,7)));E f-1::@5$2=string("-")::@5$3..@5$>=if("@4$-1"=="nan",string(""),round(@4$-1*@2));E f-1
+* SCHEDULE AND CAPACITY
+:PROPERTIES:
+:CUSTOM_ID: capacity
+:END:
+
+#+CONSTANTS: sprintlength=14 sprintnum=3
+
+#+NAME: capacity
+| sprint |          1 |          2 |          3 |          4 |          5 |          6 |
+| start  | 2012-10-02 | 2012-10-16 | 2012-10-30 | 2012-11-13 | 2012-11-27 | 2012-12-11 |
+|--------+------------+------------+------------+------------+------------+------------|
+| ian    |          6 |          5 |          5 |          5 |          3 |          5 |
+| kevin  |          3 |          4 |          5 |          5 |          4 |          5 |
+| wil    |          5 |          4 |          1 |          4 |        3.5 |          0 |
+|--------+------------+------------+------------+------------+------------+------------|
+| total  |         14 |         13 |         11 |         14 |       10.5 |         10 |
+#+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@6$<<..@6$>=vsum(@3..@>>)::@2$3..@2$>='(if(string= $0 "")(format-time-string "%Y-%m-%d" (org-scrum--increment-date(date-to-time $-1)$sprintlength))$0)
+
 * TASKS
   :PROPERTIES:
   :ID:       TASKS
-  :SPRINTLENGTH: 14
-  :SPRINTSTART: <2012-11-26 Mon>
-  :wpd-ian:      3
-  :wpd-kevin:    4
-  :wpd-wil:      3.5
   :END:
 ** RESEARCH
+:PROPERTIES:
+:SPRINT:
+:END:
 *** DEFERRED [#B] learn elisp
-    CLOSED: [2012-12-08 Sat 10:31]
+    CLOSED: [2012-10-05 Fri 10:31]
     :PROPERTIES:
     :ESTIMATED: 4
     :ACTUAL:   10
     :OWNER:    ian
     :TASKID:   T01
+    :SWIMLANE: 1
+    :SPRINT:   1
     :END:
     read [[http://steve-yegge.blogspot.com/2008/01/emergency-elisp.html][stevey's tutorial]]
     skim the [[http://www.gnu.org/software/emacs/manual/html_node/elisp/][elisp reference]]
 *** DONE learn org mode
-    CLOSED: [2012-11-27 Tue 18:24]
+    CLOSED: [2012-10-08 Mon 18:24]
     :PROPERTIES:
     :ESTIMATED: 4
     :ACTUAL:   4
     :OWNER:    ian
     :TASKID:   T02
+    :SWIMLANE: 1
+    :SPRINT:   1
      :END:
     read the [[http://orgmode.org/org.html][org mode reference]]
+*** DONE spike on org table spreadsheets
+    CLOSED: [2024-10-11 Fri 16:25]
+    :PROPERTIES:
+    :TASKID:   T14
+    :SPRINT:   1
+    :ESTIMATED: 3
+    :OWNER:    ian
+    :END:
 ** ENVIRONMENT
 *** DONE [#A] set up project folder [3/3]
-    CLOSED: [2012-11-28 Wed 20:58]
+    CLOSED: [2012-10-02 Tue 20:58]
     :PROPERTIES:
     :ESTIMATED: 1
     :ACTUAL:   1
     :OWNER:    kevin
     :TASKID:   T03
+    :SWIMLANE: 1
+    :SPRINT:   1
     :END:
     - [X] init git repo
     - [X] set up remote backups
 *** DONE [#A] write example org file
-    CLOSED: [2012-11-29 Thu 20:18]
+    CLOSED: [2012-10-12 Fri 20:18]
     :PROPERTIES:
     :ESTIMATED: 3
     :ACTUAL:   3
     :OWNER:    wil
     :TASKID:   T04
+    :DEPS:     T02
+    :SWIMLANE: 1
+    :SPRINT:   1
     :END:
 ** DESIGN
 *** DONE [#A] draw up reports ui's
-    CLOSED: [2012-11-27 Tue 18:24]
+    CLOSED: [2012-10-15 Mon 18:24]
     :PROPERTIES:
     :ESTIMATED: 4
     :ACTUAL:   3
     :OWNER:    wil
     :TASKID:   T05
+    :SWIMLANE: 2
+    :DEPS:     T02
+    :SPRINT:   1
     :END:
     list the info each report should contain.  base reports on what
     info is already easily available in org mode.
 ** CODING
     CLOSED: [2012-12-01 Sat 09:48]
 *** DONE [#A] create task list table [2/2]
-    CLOSED: [2012-11-28 Wed 10:58]
+    CLOSED: [2012-10-22 Sat 10:58]
     :PROPERTIES:
-    :OWNER:    wil kevin
+    :OWNER:    wil
     :ESTIMATED: 6
     :ACTUAL:   3
     :TASKID:   T06
+    :SWIMLANE: 1
+    :DEPS:     T04 T05
+    :SPRINT:   2
     :END:
     task list should list the tasks in the org tree as a table.  it
     should have columns for the task id, owner, and show estimates and
@@ -165,66 +205,87 @@
     - [X] compute and draw progress bars
     - [X] compute 'pencils down' date
 *** DONE [#A] create summary table
-    CLOSED: [2012-12-01 Sat 12:48]
+    CLOSED: [2012-11-09 Fri 12:48]
     :PROPERTIES:
     :OWNER:    kevin
     :ESTIMATED: 5
     :ACTUAL:   8
     :TASKID:   T07
+    :DEPS:     T06
+    :SWIMLANE: 1
+    :SPRINT:   3
     :END:
     summary table should show how busy each developer is, and how much
     progress they are making.
 *** DONE [#B] create burndown list
-    CLOSED: [2012-12-01 Sat 15:48]
+    CLOSED: [2012-10-25 Thu 15:48]
     :PROPERTIES:
     :OWNER:    ian
     :ESTIMATED: 8
     :ACTUAL:   12
     :TASKID:   T08
+    :DEPS:     T06
+    :SWIMLANE: 1
+    :SPRINT:   2
     :END:
     the burndown list is mainly to lay out the data used to draw the burndown chart.
 *** DONE [#C] create burndown chart
-    CLOSED: [2012-12-02 Sun 16:48]
+    CLOSED: [2012-11-05 Mon 16:48]
     :PROPERTIES:
-    :OWNER:    ian wil
+    :OWNER:    ian
     :ESTIMATED: 10
     :ACTUAL:   4
     :TASKID:   T09
+    :DEPS:     T08
+    :SWIMLANE: 1
+    :SPRINT:   3
     :END:
     generate an ascii burndown chart via gnuplot.
 *** DONE [#B] create scrum board
-    CLOSED: [2012-12-05 Wed 23:10]
+    CLOSED: [2012-10-29 Mon 23:10]
     :PROPERTIES:
     :OWNER:    ian
     :ESTIMATED: 6
     :ACTUAL:   8
     :TASKID:   T10
+    :DEPS:     T06
+    :SWIMLANE: 1
+    :SPRINT:   2
     :END:
     create a table with a column for each TODO status.  fill it with
     the tasks, where each task in the table links to that task in the
     outline.
 ** PUBLISH
-*** TODO add license to src files
+*** TODO [#C] add license to src files
     :PROPERTIES:
     :OWNER:    wil
     :ESTIMATED: 1
     :ACTUAL:
     :TASKID:   T11
+    :DEPS:     T03
+    :SWIMLANE: 2
+    :SPRINT:   3
     :END:
 *** STARTED [#C] write doc
     :PROPERTIES:
-    :OWNER:    wil
+    :OWNER:    ian
     :ESTIMATED: 3
     :ACTUAL:   1
     :TASKID:   T12
+    :DEPS:     T05
+    :SWIMLANE: 2
+    :SPRINT:   3
     :END:
     write a readme
-*** TODO post to github [0/2]
+*** TODO [#B] post to github [0/2]
     :PROPERTIES:
-    :OWNER:    kevin ian
-    :ESTIMATED: 1
+    :OWNER:    kevin
+    :ESTIMATED:
     :ACTUAL:
     :TASKID:   T13
+    :DEPS:     T10 T11 T12
+    :SWIMLANE: 1
+    :SPRINT:
     :END:
     - [ ] create a project
     - [ ] push repo
