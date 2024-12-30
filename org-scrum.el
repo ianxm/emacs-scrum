@@ -4,7 +4,7 @@
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -41,8 +41,8 @@
   :tag "Org Scrum"
   :group 'org)
 
-(defcustom org-scrum-taskid-prefix "T"
-  "Prefix added to taskids."
+(defcustom org-scrum-storyid-prefix "S"
+  "Prefix added to story ids."
   :type 'string
   :group 'org-scrum)
 
@@ -54,18 +54,18 @@
 (defcustom org-scrum-board-format "%i. %p %t (%o)"
   "Specify the format of the scrum board items.
 Provide a format string.  Variables are:
-- %i is replaced by the task id
+- %i is replaced by the story id
 - %p is replaced by the priority
-- %t is replaced by the task name
-- %o is replaced by the task owner(s)
+- %t is replaced by the story title
+- %o is replaced by the story owner(s)
 - %c is replaced by the close date
 
 legacy formats (deprecated):
 1. \"id\"
-2. \"priority task (closedate)\"
-3. \"id. priority task (closedate)\"
+2. \"priority title (closedate)\"
+3. \"id. priority title (closedate)\"
 4. \"id. owner (closedate)\"
-5. \"id. priority task (owner closedate)\""
+5. \"id. priority title (owner closedate)\""
   :type 'string
   :group 'org-scrum)
 
@@ -88,11 +88,11 @@ legacy formats (deprecated):
 
 (defvar org-scrum-data nil
   "This is the list of developers as (name . capacity).
-An alist containing :tasks, :developers, :sprintnum,
+An alist containing :stories, :developers, :sprintnum,
 :sprintlength, :sprintstart")
 
 (defun org-scrum--load-all ()
-  "Load task data into a list of tasks stored as alists."
+  "Load story data into a list of stories stored as alists."
   (let* ((sprintnum (string-to-number
                      (alist-get        ; read sprintnum from constants
                       "sprintnum"
@@ -104,21 +104,21 @@ An alist containing :tasks, :developers, :sprintnum,
                          org-table-formula-constants-local
                          nil nil 'equal)))
          (capacity (org-scrum--load-capacity sprintnum))
-         (tasks (org-scrum--visit-all-task-todos
-                 #'org-scrum--load-task
+         (stories (org-scrum--visit-all-story-todos
+                 #'org-scrum--load-story
                  "TODO<>\"\"")))
     (setq org-scrum-data `((:sprintnum . ,sprintnum)
        (:sprintlength . ,sprintlength)
        (:sprintstart . ,(alist-get :sprintstart capacity))
        (:developers . ,(alist-get :developers capacity))
-       (:tasks . ,tasks)))))
+       (:stories . ,stories)))))
 
-(defun org-scrum--visit-all-task-todos (fcn match)
-  "Call FCN for all tasks in the current tree that match MATCH."
+(defun org-scrum--visit-all-story-todos (fcn match)
+  "Call FCN for all stories in the current tree that match MATCH."
   (save-excursion
-    (let (tasks)
-      (org-map-entries (lambda () (setq tasks (point))) "ID=\"TASKS\"")
-      (goto-char tasks)
+    (let (stories)
+      (org-map-entries (lambda () (setq stories (point))) "ID=\"STORIES\"")
+      (goto-char stories)
       ;;(message "visiting %s" (buffer-substring (point) (line-end-position)))
       (org-map-entries fcn match 'tree))))
 
@@ -140,21 +140,21 @@ sprint from capacity table."
       (while (not (= sprintnum (string-to-number (org-table-get-field col))))
         (setq col (1+ col)))
       (forward-line)
-      (setq sprintstart (org-table-get-field col))
+      (setq sprintstart (substring-no-properties (org-table-get-field col)))
       (forward-line 2)
       (while (not (looking-at "|---"))
-        (let ((name (string-trim (org-table-get-field 1)))
+        (let ((name (substring-no-properties (string-trim (org-table-get-field 1))))
               (capacity (string-to-number (org-table-get-field col))))
           (push (cons name capacity) developers))
         (forward-line))
       `((:sprintstart . ,sprintstart)
         (:developers . ,(reverse developers))))))
 
-(defun org-scrum--load-task ()
-  "Load the task at point into an alist."
-  ;; taskid, owner, name, priority, state, estimate?, actual?, closedate (later: deps, swimlane)
+(defun org-scrum--load-story ()
+  "Load the story at point into an alist."
+  ;; storyid, owner, name, priority, state, estimate?, actual?, closedate (later: deps, swimlane)
   (let* ((state (org-entry-get (point) "TODO"))
-         (taskid (org-entry-get (point) "TASKID"))
+         (storyid (org-entry-get (point) "STORYID"))
          (name (org-scrum--extract-heading))
          (priority (if (nth 3 (org-heading-components))
                        (make-string 1 (nth 3 (org-heading-components)))
@@ -171,7 +171,7 @@ sprint from capacity table."
                       (function (lambda (ii) (if (< (setq nn (1+ nn)) 4) 0 ii)))
                       (parse-time-string closed)) ; clear time of day
             closedate (format-time-string "%Y-%m-%d" (apply #'encode-time closestr))))
-    `((:taskid . ,taskid)
+    `((:storyid . ,storyid)
       (:name . ,name)
       (:priority . ,priority)
       (:owner . ,owner)
@@ -181,18 +181,18 @@ sprint from capacity table."
       (:closedate . ,closedate)
       (:sprint . ,sprint))))
 
-(defun org-scrum--aggregate-value (all-tasks owner states prop)
-  "Sum values of property PROP from tasks for OWNER in state STATES in ALL-TASKS."
+(defun org-scrum--aggregate-value (all-stories owner states prop)
+  "Sum values of property PROP for OWNER in state STATES in ALL-STORIES."
   (apply                                ; sum
    #'+
    (seq-filter                          ; filter out zeros
     (lambda (ii) (> ii 0))
     (mapcar                             ; get props
      (lambda (ii) (alist-get prop ii))
-     (org-scrum--find-tasks all-tasks owner states)))))
+     (org-scrum--find-stories all-stories owner states)))))
 
-(defun org-scrum--find-tasks (all-tasks owner states)
-  "Find tasks for OWNER in state STATES in ALL-TASKS.
+(defun org-scrum--find-stories (all-stories owner states)
+  "Find stories for OWNER in state STATES in ALL-STORIES.
 OWNER and STATES will be ignored if nil."
   (if (or owner states)
       (seq-filter                   ; filter by owner and state
@@ -207,8 +207,8 @@ OWNER and STATES will be ignored if nil."
           (if states
               (member (alist-get :state ii) states)
             t)))
-       all-tasks)
-    all-tasks))
+       all-stories)
+    all-stories))
 
 (defun org-scrum--increment-date (cdate &optional days backp)
   "Increment the date CDATE by DAYS days, accounting for DST.
@@ -223,11 +223,11 @@ DAYS defaults to 1 day.  If BACKP, move backwards."
            (setq ndate (time-subtract ndate (seconds-to-time 3600)))))
     ndate))
 
-;; manage tasks
+;; manage stories
 
 (defun org-scrum-start-next-sprint ()
   "Start the next sprint.
-This increments SPRINTNUM and moves all of the open tasks that
+This increments SPRINTNUM and moves all of the open stories that
 are in the current sprint to the new sprint."
   (interactive)
   (org-scrum--load-all)
@@ -240,14 +240,14 @@ are in the current sprint to the new sprint."
       (replace-match (concat "#+CONSTANTS:\\1sprintnum=" (number-to-string next-sprint)))
       (org-save-outline-visibility 'use-markers (org-mode-restart)) ; local refresh to pick up change
 
-      ;; increment sprint in task list
+      ;; increment sprint in story list
       (goto-char (point-min))
       (re-search-forward (rx line-start "#+BEGIN: columnview" (group (* not-newline))
                              ":match \"SPRINT=" (+ digit) "\"" (group (* not-newline))))
       (replace-match (concat "#+BEGIN: columnview\\1:match \"SPRINT=" (number-to-string next-sprint) "\"\\2"))
 
-      ;; update open tasks
-      (org-scrum--visit-all-task-todos (lambda ()
+      ;; update open stories
+      (org-scrum--visit-all-story-todos (lambda ()
                                          (let ((state (org-entry-get (point) "TODO"))
                                                (sprint (string-to-number (or (org-entry-get (point) "SPRINT") ""))))
                                            (when (and (member state org-not-done-keywords)
@@ -256,39 +256,45 @@ are in the current sprint to the new sprint."
                                        "TODO<>\"\"")))
   (setq org-scrum-data nil))
 
-(defun org-scrum-reset-taskids ()
-  "Replace `TASKIDs' of all tasks with consecutive values.
+(defun org-scrum-reset-storyids ()
+  "Replace `STORYIDs' of all stories with consecutive values.
 This is deprecated and will be altered or removed in future versions."
   (interactive)
   (save-excursion
     (let ((ii 1))
-      (org-scrum--visit-all-task-todos (lambda ()
-                                     (org-entry-put (point) "TASKID" (format "%s%02d" org-scrum-taskid-prefix ii))
-                                     (setq ii (1+ ii)))
-                                   "TODO<>\"\""))))
+      (org-scrum--visit-all-story-todos
+       (lambda ()
+         (org-entry-put (point) "STORYID" (format "%s%02d" org-scrum-storyid-prefix ii))
+         (setq ii (1+ ii)))
+       "TODO<>\"\""))))
 
 ;; developer summary
 
-(defun org-scrum--get-finish-date (hours capacity)
-  "Count the days to get HOURS work done at CAPACITY, skipping weekends.
-CAPACITY is in hours per day."
-  (let ((cdate (current-time))
-        (hoursleft hours)
-        ctime)
-    (while (> hoursleft 0)
-      (setq cdate (org-scrum--increment-date cdate)
-            ctime (decode-time cdate))
-      (if (and (> (nth 6 ctime) 0) (< (nth 6 ctime) 6))
-          (setq hoursleft (- hoursleft capacity))))
-    cdate))
+(defun org-scrum--get-finish-date (points velocity capacity)
+  "Count the days to get POINTS work done given VELOCITY and CAPACITY.
+VELOCITY is taken from last sprint, or defaults to 1. CAPACITY is
+in hours per day.  Count days required to complete work, skipping
+weekends.  Return date of completion, or `no capacity' if
+capacity is 0 since completion is impossible."
+  (let* ((cdate (current-time))
+         (hoursleft (ceiling (/ points velocity)))
+         ctime)
+    (if (= capacity 0)
+        "no capacity"
+      (while (> hoursleft 0)
+        (setq cdate (org-scrum--increment-date cdate)
+              ctime (decode-time cdate))
+        (if (and (> (nth 6 ctime) 0) (< (nth 6 ctime) 6))
+            (setq hoursleft (- hoursleft capacity))))
+      (format-time-string "%Y-%m-%d" cdate))))
 
-(defun org-scrum--get-work-left (cdate closed-tasks tot)
+(defun org-scrum--get-work-left (cdate closed-stories tot)
   "Get the actual work remaining for the date CDATE.
 Computes work remaining given the list of closed items
-CLOSED-TASKS and total hours TOT.  Returns `(list-of-closed-tasks .
+CLOSED-STORIES and total points TOT.  Returns `(list-of-closed-stories .
 total-remaining-work)'"
   (let (closetime toremove)
-    (dolist (item closed-tasks)
+    (dolist (item closed-stories)
       (setq closetime (date-to-time (alist-get :closedate item)))
       (unless (time-less-p cdate closetime)
         (setq tot (- tot (alist-get :estimated item)))
@@ -307,39 +313,53 @@ total-remaining-work)'"
 (defun org-dblock-write:block-update-summary (_params)
   "Generate developer summary table."
   (let ((loadp (not org-scrum-data))
-        (est  0)                ; hours estimated
-        (act  0)                ; actual hours spent
-        (done 0)                ; hours of estimates that are done
-        (rem  0)                ; hours of estimates that are left
-        developers sprint tasks)
+        (est  0)                ; points estimated
+        (act  0)                ; actual points spent
+        (done 0)                ; points of estimates that are done
+        (rem  0)                ; points of estimates that are left
+        developers sprint stories velocity)
 
     (when loadp
       (org-scrum--load-all))
     (setq developers (alist-get :developers org-scrum-data)
           sprint (alist-get :sprintnum org-scrum-data)
-          tasks (seq-filter (lambda (ii) (= sprint (or (alist-get :sprint ii) 0)))
-                            (alist-get :tasks org-scrum-data)))
+          stories (seq-filter (lambda (ii) (= sprint (or (alist-get :sprint ii) 0)))
+                            (alist-get :stories org-scrum-data))
+          velocity (org-scrum--get-velocity sprint))
     (when (= 0 (length developers))
       (error "No developers found in the capacity table"))
 
     (insert "| NAME | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS |\n|-")
     (dolist (developer developers)
-      (setq est  (org-scrum--aggregate-value tasks (car developer) (append org-not-done-keywords org-done-keywords) :estimated))
-      (setq act  (org-scrum--aggregate-value tasks (car developer) '()  :actual))
-      (setq done (org-scrum--aggregate-value tasks (car developer) org-done-keywords :estimated))
-      (setq rem  (org-scrum--aggregate-value tasks (car developer) org-not-done-keywords :estimated))
+      (setq est  (org-scrum--aggregate-value stories (car developer) (append org-not-done-keywords org-done-keywords) :estimated))
+      (setq act  (org-scrum--aggregate-value stories (car developer) '()  :actual))
+      (setq done (org-scrum--aggregate-value stories (car developer) org-done-keywords :estimated))
+      (setq rem  (org-scrum--aggregate-value stories (car developer) org-not-done-keywords :estimated))
 
       (insert "\n| " (car developer)
               " | " (number-to-string est)
               " | " (number-to-string act)
               " | " (number-to-string done)
               " | " (number-to-string rem)
-              " | " (format-time-string "%Y-%m-%d" (org-scrum--get-finish-date rem (cdr developer)))
+              " | " (org-scrum--get-finish-date rem velocity (cdr developer))
               " | " (org-scrum--draw-progress-bar est done)
               " |"))
     (org-table-align)
     (when loadp
       (setq org-scrum-data nil))))
+
+(defun org-scrum--get-velocity (sprint)
+  "Load velocity from previous SPRINT from the projections table.
+Default to `1'."
+  (save-excursion
+    (goto-char (point-min))
+    (if (or (= sprint 1)
+            (not (re-search-forward
+                  (rx line-start "#+NAME:" (* space) "projections")
+                  nil t)))
+        1
+      (forward-line 5)
+      (string-to-number (org-table-get-field sprint)))))
 
 ;; scrum board
 
@@ -350,26 +370,26 @@ total-remaining-work)'"
          (hdg (if bracket
                   (substring fullhdg 0 (min (1- bracket) ))
                 fullhdg))
-         (maxlen 30)) ; max length of scrum board task name
+         (maxlen 30)) ; max length of scrum board story title
     (substring fullhdg 0 (min (length hdg) maxlen))))
 
-(defun org-scrum--make-scrum-board-label (task)
-  "Make a scrum board entry from the given TASK."
-  (let* ((taskid (alist-get :taskid task))
-         (name (alist-get :name task))
-         (priority (alist-get :priority task))
-         (owner (alist-get :owner task))
-         (closedate (alist-get :closedate task))
+(defun org-scrum--make-scrum-board-label (story)
+  "Make a scrum board entry from the given STORY."
+  (let* ((storyid (alist-get :storyid story))
+         (name (alist-get :name story))
+         (priority (alist-get :priority story))
+         (owner (alist-get :owner story))
+         (closedate (alist-get :closedate story))
          label)
     (setq label (cond                   ; scrum board label
                  ;; legacy formats
-                 ((string= "1" org-scrum-board-format) taskid)
+                 ((string= "1" org-scrum-board-format) storyid)
                  ((string= "2" org-scrum-board-format) (format "[#%s] %s (%s)" priority name closedate))
-                 ((string= "3" org-scrum-board-format) (format "%s. [#%s] %s (%s)" taskid priority name closedate))
-                 ((string= "4" org-scrum-board-format) (format "%s. %s (%s)" taskid (or owner "not assigned") closedate))
-                 ((string= "5" org-scrum-board-format) (format "%s. [#%s] %s (%s %s)" taskid priority name owner closedate))
+                 ((string= "3" org-scrum-board-format) (format "%s. [#%s] %s (%s)" storyid priority name closedate))
+                 ((string= "4" org-scrum-board-format) (format "%s. %s (%s)" storyid (or owner "not assigned") closedate))
+                 ((string= "5" org-scrum-board-format) (format "%s. [#%s] %s (%s %s)" storyid priority name owner closedate))
                  ;; custom formats
-                 (t (setq label (replace-regexp-in-string "%i" taskid org-scrum-board-format)
+                 (t (setq label (replace-regexp-in-string "%i" storyid org-scrum-board-format)
                           label (replace-regexp-in-string "%p" (or (and priority (string-trim priority))  "") label)
                           label (replace-regexp-in-string "%t" name label)
                           label (replace-regexp-in-string "%o" (or owner "") label)
@@ -388,40 +408,40 @@ total-remaining-work)'"
   (let* ((loadp (not org-scrum-data))
          (todokwds                      ; list of all todo keywords
           (append org-not-done-keywords org-done-keywords))
-         sprint tasks-by-state)
+         sprint stories-by-state)
     (when loadp
       (org-scrum--load-all))
 
     (setq sprint (alist-get :sprintnum org-scrum-data)
-          tasks-by-state (seq-group-by
+          stories-by-state (seq-group-by
                           (lambda (ii) (alist-get :state ii))
                           (seq-filter
                            (lambda (ii) (= sprint (or (alist-get :sprint ii) 0)))
-                           (alist-get :tasks org-scrum-data))))
+                           (alist-get :stories org-scrum-data))))
 
     ;; set up the table
     (insert "| " (mapconcat #'identity todokwds "|") "\n|-\n|")
     (org-table-align)
     (org-table-analyze)
 
-    (dolist (item tasks-by-state)
+    (dolist (item stories-by-state)
       (let* ((state (car item))
             (index (- (length todokwds)
                       (length (member state todokwds))
                       -1))
-            (state-tasks
+            (state-stories
              (if (member state org-not-done-keywords)
-                 (sort              ; sort open tasks by priority
+                 (sort              ; sort open stories by priority
                   (cdr item)
                   (lambda (a b) (string> (alist-get :priority b)
                                          (alist-get :priority a))))
-               (sort                ; sort closed tasks by date closed
+               (sort                ; sort closed stories by date closed
                 (cdr item)
                 (lambda (a b) (string> (alist-get :closedate b)
                                        (alist-get :closedate a)))))))
         (org-table-goto-field (format "@2$%d" index))
-        (dolist (item state-tasks)
-          (unless (eq item (car state-tasks))
+        (dolist (item state-stories)
+          (unless (eq item (car state-stories))
             (org-table-next-row))
           (let ((label (org-scrum--make-scrum-board-label item)))
             (insert label)))))
@@ -442,23 +462,23 @@ is the total number of story points for the sprint."
         (cdate start)                   ; the date of the current date as we iterate
         (day 0)                         ; counts the days as we iterate
         sprint                          ; current sprint
-        closed-tasks                    ; list of closed tasks that contribute to burndown
+        closed-stories                  ; list of closed stories that contribute to burndown
         actual-burndown)                ; the list of burndown by day
     (when loadp
       (org-scrum--load-all))
     (setq sprint (alist-get :sprintnum org-scrum-data)
-          closed-tasks (org-scrum--find-tasks
+          closed-stories (org-scrum--find-stories
                         (seq-filter
                          (lambda (ii) (= sprint (or (alist-get :sprint ii) 0)))
-                         (alist-get :tasks org-scrum-data))
+                         (alist-get :stories org-scrum-data))
                         nil org-done-keywords))
     (while (< day sprintlength)
       (setq cdate (org-scrum--increment-date cdate)) ; increment current day
       (if (time-less-p cdate today)
-          (let* ((ret (org-scrum--get-work-left cdate closed-tasks left))
-                (toremove (car ret))) ; save list of completed tasks
+          (let* ((ret (org-scrum--get-work-left cdate closed-stories left))
+                (toremove (car ret))) ; save list of completed stories
             (setq left (cdr ret)      ; save new total
-                  closed-tasks (seq-remove (lambda (ii) (seq-contains-p toremove ii)) closed-tasks) ; remove tasks that have been counted
+                  closed-stories (seq-remove (lambda (ii) (seq-contains-p toremove ii)) closed-stories) ; remove stories that have been counted
                   actual-burndown (push (number-to-string left) actual-burndown)))
         (setq actual-burndown (push "" actual-burndown)))
       (setq day (1+ day)))
@@ -503,8 +523,8 @@ Returns a list of `(date actual ideal)'."
          (tot (org-scrum--aggregate-value
                (seq-filter
                 (lambda (ii) (= sprint (or (alist-get :sprint ii) 0)))
-                (alist-get :tasks org-scrum-data))
-               nil nil :estimated)) ; total estimated hours
+                (alist-get :stories org-scrum-data))
+               nil nil :estimated)) ; total estimated points
          cdate                 ; current date for iterating
          sprintlength)         ; number of calendar days in the sprint
     ;; look up start date and sprint length
@@ -514,7 +534,7 @@ Returns a list of `(date actual ideal)'."
                     (date-to-time (alist-get :sprintstart org-scrum-data))
                     nil t)
              sprintlength (alist-get :sprintlength org-scrum-data)))
-                     "ID=\"TASKS\"")
+                     "ID=\"STORIES\"")
     (if (or (null cdate) (null sprintlength))
         (error "Couldn't find #+CONSTANTS setting \"sprintlength\" and \"sprintstart\" in the capacity table"))
 
@@ -544,7 +564,7 @@ The config includes inline data taken from BURNDOWN-DATA."
          (insert "set style line 2 lt 0 lw 1\n")))
   (insert "set title \"Burndown\"\n")
   (insert "set xlabel \"day of sprint\"\n")
-  (insert "set ylabel \"hrs\"\n")
+  (insert "set ylabel \"points\"\n")
   (insert (format "set xrange [1:%d]\n" (length burndown-data)))
   (insert "plot \"-\" using 1:2 with lines ls 1 title \"actual\", \"\" using 1:3 with lines ls 2 title \"ideal\"\n")
 
@@ -583,7 +603,7 @@ The config includes inline data taken from BURNDOWN-DATA."
             (insert "[[./burndown.svg]]")      ; using an org link instead of embedding the image
             (org-display-inline-images))       ; so it gets exported correctly
         (goto-char pt)
-        (while (search-forward "\f" nil t)  ; delete the formfeed in gnuplot output
+        (while (search-forward "\f" nil t)     ; delete the formfeed in gnuplot output
           (replace-match ""))
         (while (not (looking-at "#\\+END"))    ; prefix graph lines so org exports them cleanly
           (insert ":")
@@ -591,7 +611,7 @@ The config includes inline data taken from BURNDOWN-DATA."
         (save-restriction
           (narrow-to-region pt (point))
           (goto-char pt)                       ; the default linestyle with dots also has '+'s at the points
-          (while (search-forward "#" nil t) ; which make the graph busier, so we use '#' and then swap them
+          (while (search-forward "#" nil t)    ; which make the graph busier, so we use '#' and then swap them
             (replace-match "\.")))))           ; for dots
     (when loadp
       (setq org-scrum-data nil))))
@@ -600,21 +620,21 @@ The config includes inline data taken from BURNDOWN-DATA."
 
 (defun org-scrum--set-completed ()
   "Set completed per sprint in the planning table.
-Count hours completed in each sprint and update the SPRINT
+Count points completed in each sprint and update the SPRINT
 PLANNING table."
-  (let ((tasks (alist-get :tasks org-scrum-data))
+  (let ((stories (alist-get :stories org-scrum-data))
         (sprint (alist-get :sprintnum org-scrum-data))
         (hash (make-hash-table)))
     ;; get totals per sprint
-    (dolist (task tasks)
-      (let ((tasksprint (alist-get :sprint task))
-            (estimated (alist-get :estimated task))
-            (donep (member (alist-get :state task) org-done-keywords)))
+    (dolist (story stories)
+      (let ((story-sprint (alist-get :sprint story))
+            (estimated (alist-get :estimated story))
+            (donep (member (alist-get :state story) org-done-keywords)))
         (when (and donep
-                   (> tasksprint 0))
+                   (> story-sprint 0))
           (puthash
-           tasksprint
-           (+ (gethash tasksprint hash 0) estimated)
+           story-sprint
+           (+ (gethash story-sprint hash 0) estimated)
            hash))))
     ;; update table
     (save-excursion
@@ -635,12 +655,12 @@ PLANNING table."
 
 ;; scrum cards
 
-(defun org-scrum--generate-task-card (task)
-  "Generate a scrum card for the given TASK."
-  (let* ((name (alist-get :name task))
-         (id (or (alist-get :taskid task) "\\_\\_\\_"))
-         (owner (or (alist-get :owner task) "\\_\\_\\_\\_\\_"))
-         (estnum (alist-get :estimated task))
+(defun org-scrum--generate-story-card (story)
+  "Generate a scrum card for the given STORY."
+  (let* ((name (alist-get :name story))
+         (id (or (alist-get :storyid story) "\\_\\_\\_"))
+         (owner (or (alist-get :owner story) "\\_\\_\\_\\_\\_"))
+         (estnum (alist-get :estimated story))
          (est (if (> estnum 0)
                   (number-to-string estnum)
                 "\\_\\_\\_")))
@@ -655,8 +675,8 @@ PLANNING table."
 \\end{tabular}
 " est id owner name)))
 
-(defun org-scrum-generate-task-cards ()
-  "Generate scrum board task cards in latex format.
+(defun org-scrum-generate-story-cards ()
+  "Generate scrum board story cards in latex format.
 This depends on latex and the multirow style installed on the
 system.  The result is the file \"scrum_cards.pdf\"."
   (interactive)
@@ -675,10 +695,10 @@ system.  The result is the file \"scrum_cards.pdf\"."
 \\pagestyle{empty}
 \\twocolumn
 \n"
-                                (mapconcat #'org-scrum--generate-task-card
+                                (mapconcat #'org-scrum--generate-story-card
                                            (seq-filter
                                             (lambda (ii) (= sprint (alist-get :sprint ii)))
-                                            (alist-get :tasks org-scrum-data))
+                                            (alist-get :stories org-scrum-data))
                                            "\n")
                                 "\n\\end{document}\n"))
       (with-temp-file "scrum_cards.tex"
@@ -693,27 +713,31 @@ system.  The result is the file \"scrum_cards.pdf\"."
 (defun org-scrum-update-all ()
   "Update all report sections in a scrum org file."
   (interactive)
+
+  ;; check for old version of template
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward (rx line-start (* space) ":ID:" (* space) "TASKS" (* space) line-end) nil t)
+      (error "This org-scrum file must be upgraded to work with the current version of org-scrum; see the org-scrum readme for more details")))
+
   (org-scrum--load-all)
   (save-excursion
     (goto-char (point-min))
-    (let* ((found (re-search-forward (rx line-start "#+BEGIN:" (* space) "block-update-graph") nil t))
-           (skipped '())
+    (let* ((skipped '())
            (update-block (lambda (pattern name)
-                          (goto-char (point-min))
-                          (if (re-search-forward pattern nil t)
-                              (org-ctrl-c-ctrl-c)
-                            (push name skipped)))))
-      (if found
-          (error "This org-scrum file must be upgraded to work with the current version of org-scrum; see the org-scrum readme for more details")
-        (funcall update-block (rx line-start "#+BEGIN:" (* space) "columnview" (* not-newline) ":id \"TASKS\"") "TASKS columnview")
-        (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-summary") "block-update-summary")
-        (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-board") "block-update-board")
-        (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-burndown") "block-update-burndown")
-        (funcall update-block (rx line-start "#+NAME:" (* space) "capacity" (*? anything) line-start "#+TBLFM:") "capacity table")
-        (org-scrum--set-completed)
-        (funcall update-block (rx line-start "#+NAME:" (* space) "projections" (*? anything) line-start "#+TBLFM:") "projections table")
-        (when skipped
-          (message "Skippped blocks that were not found: %s" (string-join (nreverse skipped) ", "))))))
+                           (goto-char (point-min))
+                           (if (re-search-forward pattern nil t)
+                               (org-ctrl-c-ctrl-c)
+                             (push name skipped)))))
+      (funcall update-block (rx line-start "#+NAME:" (* space) "capacity" (*? anything) line-start "#+TBLFM:") "capacity table")
+      (org-scrum--set-completed)
+      (funcall update-block (rx line-start "#+NAME:" (* space) "projections" (*? anything) line-start "#+TBLFM:") "projections table")
+      (funcall update-block (rx line-start "#+BEGIN:" (* space) "columnview" (* not-newline) ":id \"STORIES\"") "STORIES columnview")
+      (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-summary") "block-update-summary")
+      (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-board") "block-update-board")
+      (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-burndown") "block-update-burndown")
+      (when skipped
+        (message "Skippped blocks that were not found: %s" (string-join (nreverse skipped) ", ")))))
   (setq org-scrum-data nil))
 
 (provide 'org-scrum)

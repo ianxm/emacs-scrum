@@ -2,11 +2,11 @@
 #+AUTHOR: ian
 #+EMAIL: ianxm@jhu.edu
 #+TODO: TODO STARTED | DONE DEFERRED
-#+COLUMNS: %35ITEM %TASKID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+} %SPRINT %DEPS %SWIMLANE
+#+COLUMNS: %35ITEM %STORYID %OWNER %3PRIORITY %TODO %5ESTIMATED{+} %3ACTUAL{+} %SPRINT %DEPS %SWIMLANE
 #+HTML_HEAD: <style>table { width: 100%; border: 1px solid; } th,td { border-left: 1px solid;border-right: 1px solid; } th { background-color: #f2f2f2; } div#outline-container-summary table td:last-child { font-family: monospace; text-align: center; } div#outline-container-capacity table tbody:last-child { font-weight: bold; background-color: #f2f2f2; }</style>
 
 * REPORTS
-#+begin_src note :exports none
+#+begin_src org :exports none
 These tables are generated. Edits will be lost.
 #+end_src
 ** SCRUM BOARD
@@ -26,9 +26,9 @@ These tables are generated. Edits will be lost.
 #+BEGIN: block-update-summary
 | NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |-------+-----------+--------+------+-----------+--------------+------------|
-| ian   |        13 |      5 |   10 |         3 |   2024-12-25 | ########-- |
-| kevin |         5 |      8 |    5 |         0 |   2024-12-24 | ########## |
-| wil   |         1 |      0 |    0 |         1 |   2024-12-25 | ---------- |
+| ian   |        13 |      5 |   10 |         3 |   2024-12-30 | ########-- |
+| kevin |         5 |      8 |    5 |         0 |   2024-12-29 | ########## |
+| wil   |         1 |      0 |    0 |         1 |  no capacity | ---------- |
 #+END:
 ** BURNDOWN CHART
 :PROPERTIES:
@@ -50,7 +50,7 @@ These tables are generated. Edits will be lost.
 :     12 |-+                          ....      *                                              +-|
 :        |                                ...   *                                                |
 :     10 |-+                                 ....*                                             +-|
-: hrs    |                                       ................                                |
+:        |                                       ................                                |
 :        |                                        ***************....**                          |
 :      8 |-+                                                         ...*                      +-|
 :        |                                                              ....                     |
@@ -67,17 +67,17 @@ These tables are generated. Edits will be lost.
 :
 :
 #+END:
-** TASK LIST
+** STORY LIST
 :PROPERTIES:
-:CUSTOM_ID: tasklist
+:CUSTOM_ID: storylist
 :END:
-#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "TASKS" :match "SPRINT=3"
-| ITEM                     | TASKID | OWNER | PRIORITY | TODO    | ESTIMATED | ACTUAL | SPRINT | DEPS | SWIMLANE |
-|--------------------------+--------+-------+----------+---------+-----------+--------+--------+------+----------|
-| create summary table     | T07    | kevin | A        | DONE    |         5 |      8 |      3 | T06  |        1 |
-| create burndown chart    | T09    | ian   | C        | DONE    |        10 |      4 |      3 | T08  |        1 |
-| add license to src files | T11    | wil   | C        | TODO    |         1 |        |      3 | T03  |        2 |
-| write doc                | T12    | ian   | C        | STARTED |         3 |      1 |      3 | T05  |        2 |
+#+BEGIN: columnview :hlines 2 :maxlevel 5 :id "STORIES" :match "SPRINT=3"
+| ITEM                     | STORYID | OWNER | PRIORITY | TODO    | ESTIMATED | ACTUAL | SPRINT | DEPS | SWIMLANE |
+|--------------------------+---------+-------+----------+---------+-----------+--------+--------+------+----------|
+| create summary table     | T07     | kevin | A        | DONE    |         5 |      8 |      3 | T06  |        1 |
+| create burndown chart    | T09     | ian   | C        | DONE    |        10 |      4 |      3 | T08  |        1 |
+| add license to src files | T11     | wil   | C        | TODO    |         1 |        |      3 | T03  |        2 |
+| write doc                | T12     | ian   | C        | STARTED |         3 |      1 |      3 | T05  |        2 |
 #+END:
 ** SPRINT PLANNING
 :PROPERTIES:
@@ -86,10 +86,10 @@ These tables are generated. Edits will be lost.
 #+NAME: projections
 | sprint    |   1 |   2 |   3 |  4 |    5 |  6 |
 |-----------+-----+-----+-----+----+------+----|
-| capacity  |  14 |  13 |  11 | 14 | 10.5 | 10 |
+| capacity  |  14 |  13 |  10 | 14 | 10.5 | 10 |
 | completed |  19 |  20 |  15 |    |      |    |
-| velocity  | 1.4 | 1.4 | 1.4 |    |      |    |
-| projected |   - |  18 |  15 | 20 |      |    |
+| velocity  | 1.4 | 1.4 | 1.5 |    |      |    |
+| projected |   - |  18 |  14 | 21 |      |    |
 #+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@2$<<..@2$>=remote(capacity,@>$$#)::@4$2=if("@2$0"=="nan"||"@3$0"=="nan",string(""),@3/@2);E f-1::@4$3..@4$>=if("@2$0"=="nan"||"@3$0"=="nan",string(""),vmean(map(div,subvec(@3$2..@3$0,1,7),subvec(@2$2..@2$0,1,7)));E f-1::@5$2=string("-")::@5$3..@5$>=if("@4$-1"=="nan",string(""),round(@4$-1*@2));E f-1
 * SCHEDULE AND CAPACITY
 :PROPERTIES:
@@ -104,26 +104,24 @@ These tables are generated. Edits will be lost.
 |--------+------------+------------+------------+------------+------------+------------|
 | ian    |          6 |          5 |          5 |          5 |          3 |          5 |
 | kevin  |          3 |          4 |          5 |          5 |          4 |          5 |
-| wil    |          5 |          4 |          1 |          4 |        3.5 |          0 |
+| wil    |          5 |          4 |          0 |          4 |        3.5 |          0 |
 |--------+------------+------------+------------+------------+------------+------------|
-| total  |         14 |         13 |         11 |         14 |       10.5 |         10 |
-#+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@6$<<..@6$>=vsum(@3..@>>)::@2$3..@2$>='(if(string= $0 "")(format-time-string "%Y-%m-%d" (org-scrum--increment-date(date-to-time $-1)$sprintlength))$0)
+| total  |         14 |         13 |         10 |         14 |       10.5 |         10 |
+#+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@>$<<..@>$>=vsum(@3..@>>)::@2$3..@2$>='(if(string= $0 "")(format-time-string "%Y-%m-%d" (org-scrum--increment-date(date-to-time $-1)$sprintlength))$0)
 
-* TASKS
+
+* STORIES                                                          :noexport:
   :PROPERTIES:
-  :ID:       TASKS
+  :ID:       STORIES
   :END:
 ** RESEARCH
-:PROPERTIES:
-:SPRINT:
-:END:
 *** DEFERRED [#B] learn elisp
     CLOSED: [2012-10-05 Fri 10:31]
     :PROPERTIES:
     :ESTIMATED: 4
     :ACTUAL:   10
     :OWNER:    ian
-    :TASKID:   T01
+    :STORYID:   T01
     :SWIMLANE: 1
     :SPRINT:   1
     :END:
@@ -135,7 +133,7 @@ These tables are generated. Edits will be lost.
     :ESTIMATED: 4
     :ACTUAL:   4
     :OWNER:    ian
-    :TASKID:   T02
+    :STORYID:   T02
     :SWIMLANE: 1
     :SPRINT:   1
      :END:
@@ -143,7 +141,7 @@ These tables are generated. Edits will be lost.
 *** DONE spike on org table spreadsheets
     CLOSED: [2024-10-11 Fri 16:25]
     :PROPERTIES:
-    :TASKID:   T14
+    :STORYID:   T14
     :SPRINT:   1
     :ESTIMATED: 3
     :OWNER:    ian
@@ -155,7 +153,7 @@ These tables are generated. Edits will be lost.
     :ESTIMATED: 1
     :ACTUAL:   1
     :OWNER:    kevin
-    :TASKID:   T03
+    :STORYID:   T03
     :SWIMLANE: 1
     :SPRINT:   1
     :END:
@@ -167,7 +165,7 @@ These tables are generated. Edits will be lost.
     :ESTIMATED: 3
     :ACTUAL:   3
     :OWNER:    wil
-    :TASKID:   T04
+    :STORYID:   T04
     :DEPS:     T02
     :SWIMLANE: 1
     :SPRINT:   1
@@ -179,7 +177,7 @@ These tables are generated. Edits will be lost.
     :ESTIMATED: 4
     :ACTUAL:   3
     :OWNER:    wil
-    :TASKID:   T05
+    :STORYID:   T05
     :SWIMLANE: 2
     :DEPS:     T02
     :SPRINT:   1
@@ -188,19 +186,19 @@ These tables are generated. Edits will be lost.
     info is already easily available in org mode.
 ** CODING
     CLOSED: [2012-12-01 Sat 09:48]
-*** DONE [#A] create task list table [2/2]
+*** DONE [#A] create story list table [2/2]
     CLOSED: [2012-10-22 Sat 10:58]
     :PROPERTIES:
     :OWNER:    wil
     :ESTIMATED: 6
     :ACTUAL:   3
-    :TASKID:   T06
+    :STORYID:   T06
     :SWIMLANE: 1
     :DEPS:     T04 T05
     :SPRINT:   2
     :END:
-    task list should list the tasks in the org tree as a table.  it
-    should have columns for the task id, owner, and show estimates and
+    story list should list the storys in the org tree as a table.  it
+    should have columns for the story id, owner, and show estimates and
     actuals.
     - [X] compute and draw progress bars
     - [X] compute 'pencils down' date
@@ -210,7 +208,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    kevin
     :ESTIMATED: 5
     :ACTUAL:   8
-    :TASKID:   T07
+    :STORYID:   T07
     :DEPS:     T06
     :SWIMLANE: 1
     :SPRINT:   3
@@ -223,7 +221,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    ian
     :ESTIMATED: 8
     :ACTUAL:   12
-    :TASKID:   T08
+    :STORYID:   T08
     :DEPS:     T06
     :SWIMLANE: 1
     :SPRINT:   2
@@ -235,7 +233,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    ian
     :ESTIMATED: 10
     :ACTUAL:   4
-    :TASKID:   T09
+    :STORYID:   T09
     :DEPS:     T08
     :SWIMLANE: 1
     :SPRINT:   3
@@ -247,13 +245,13 @@ These tables are generated. Edits will be lost.
     :OWNER:    ian
     :ESTIMATED: 6
     :ACTUAL:   8
-    :TASKID:   T10
+    :STORYID:   T10
     :DEPS:     T06
     :SWIMLANE: 1
     :SPRINT:   2
     :END:
     create a table with a column for each TODO status.  fill it with
-    the tasks, where each task in the table links to that task in the
+    the stories, where each story in the table links to that story in the
     outline.
 ** PUBLISH
 *** TODO [#C] add license to src files
@@ -261,7 +259,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    wil
     :ESTIMATED: 1
     :ACTUAL:
-    :TASKID:   T11
+    :STORYID:   T11
     :DEPS:     T03
     :SWIMLANE: 2
     :SPRINT:   3
@@ -271,7 +269,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    ian
     :ESTIMATED: 3
     :ACTUAL:   1
-    :TASKID:   T12
+    :STORYID:   T12
     :DEPS:     T05
     :SWIMLANE: 2
     :SPRINT:   3
@@ -282,7 +280,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    kevin
     :ESTIMATED:
     :ACTUAL:
-    :TASKID:   T13
+    :STORYID:   T13
     :DEPS:     T10 T11 T12
     :SWIMLANE: 1
     :SPRINT:
