@@ -60,6 +60,12 @@
    - ESTIMATED :: story point estimate
    - ACTUAL :: optional revised story points
 
+   the SPRINT PROGRESS section contains a graph of stories linked to
+   dependencies.  this can help to determine in which order stories
+   need to be taken up.  Stories are also colored from light to dark
+   depending on their current TODO state so this graph also gives a
+   view into overall progress.
+
    the SPRINT PLANNING table uses developer capacity and points
    completed to calculate the team's velocity.  velocity is the
    average number of estimated hours completed over the last six
@@ -233,7 +239,10 @@
 #+BEGIN: block-update-summary
 #+END:
 
-#+BEGIN: block-update-graph
+#+BEGIN: block-update-burndown
+#+END:
+
+#+BEGIN: block-sprint-progress
 #+END:
 
 #+BEGIN: columnview :hlines 2 :maxlevel 5 :id "STORIES"
@@ -326,3 +335,5 @@
       - 3 :: ~id. priority title (closedate)~
       - 4 :: ~id. owner (closedate)~
       - 5 :: ~id. priority title (owner closedate)~
+    - org-scrum-progress-colors :: specify the mapping of TODO state
+      to color to use for it in the progress graph.
