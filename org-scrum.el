@@ -4,7 +4,7 @@
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.2.2
+;; Version: 0.2.3
 ;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -34,6 +34,7 @@
 (require 'cl-lib)
 (require 'org)
 (require 'ob-gnuplot)
+(require 'ob-dot)
 
 ;; custom variables
 
@@ -83,6 +84,14 @@ legacy formats (deprecated):
 (defcustom org-scrum-image-size '(700 . 450)
   "The size (width . height) in pixels to make image graphs."
   :type '(cons number number)
+  :group 'org-scrum)
+
+(defcustom org-scrum-progress-colors '(("TODO" . "#95ee00")
+                                       ("STARTED" . "#7ac200")
+                                       ("DEFERRED" . "#888888")
+                                       ("DONE" . "#548700"))
+  "Colors to use for the progress graph."
+  :type '(alist :key-type string :value-type string)
   :group 'org-scrum)
 
 ;; dynamically scoped constants and variables and associated helper functions
@@ -153,7 +162,7 @@ sprint from capacity table."
 
 (defun org-scrum--load-story ()
   "Load the story at point into an alist."
-  ;; storyid, owner, name, priority, state, estimate?, actual?, closedate (later: deps, swimlane)
+  ;; storyid, owner, name, priority, state, estimated, actual, closedate, deps, swimlane
   (let* ((state (org-entry-get (point) "TODO"))
          (storyid (org-entry-get (point) "STORYID"))
          (name (org-scrum--extract-heading))
@@ -165,6 +174,8 @@ sprint from capacity table."
          (actual (string-to-number (or (org-entry-get (point) "ACTUAL") "")))
          (closed (org-entry-get (point) "CLOSED"))
          (sprint (string-to-number (or (org-entry-get (point) "SPRINT") "")))
+         (deps (string-split (or (org-entry-get (point) "DEPS") "")))
+         (swimlane (string-to-number (or (org-entry-get (point) "SWIMLANE") "")))
          (nn 0)
          closestr closedate)
     (unless (null closed)          ; only include closedate for DONE items
@@ -180,7 +191,9 @@ sprint from capacity table."
       (:estimated . ,estimated)
       (:actual . ,actual)
       (:closedate . ,closedate)
-      (:sprint . ,sprint))))
+      (:sprint . ,sprint)
+      (:deps . ,deps)
+      (:swimlane . ,(if (> swimlane 0) swimlane 1)))))
 
 (defun org-scrum--aggregate-value (all-stories owner states prop)
   "Sum values of property PROP for OWNER in state STATES in ALL-STORIES."
@@ -619,6 +632,68 @@ The config includes inline data taken from BURNDOWN-DATA."
     (when loadp
       (setq org-scrum-data nil))))
 
+;; progress graph
+
+(defun org-scrum--make-dot-config ()
+  "Return a dot config made up of story dependencies.
+Included all stories instead of filtering by current sprint in
+order to get the full view of progress."
+  (with-temp-buffer
+    ;; write new graph data
+    (insert "  digraph g {
+      graph [rankdir=\"UD\"]
+      node [shape=box style=rounded fontcolor=\"#000000\"]
+")
+    ;; write swimlanes
+    (let* ((stories (alist-get :stories org-scrum-data))
+           (stories-by-swimlane (seq-group-by (lambda (x) (alist-get :swimlane x))
+                                              stories)))
+      (message "grouped %s" stories-by-swimlane)
+      (dolist (swimlane stories-by-swimlane)
+        (insert (format "      subgraph cluster_sl%s {
+        color=\"#000000\"
+        fontcolor=\"#000000\"
+        label=\"Swimlane %s\"\n"
+                        (car swimlane)
+                        (car swimlane)))
+
+        (dolist (story (cdr swimlane))
+          (insert (format "        %s [style=\"filled,rounded\" fillcolor=\"%s\" label=\"%s\\n(%s)\"]\n"
+                          (alist-get :storyid story)
+                          (alist-get (alist-get :state story) org-scrum-progress-colors "#bbbbbb" nil #'string=)
+                          (alist-get :name story)
+                          (alist-get :owner story))))
+
+        (insert  "      }\n"))
+
+
+      ;; write dependencies
+      (dolist (story stories)
+        (dolist (dep (alist-get :deps story))
+          (insert (format "  %s -> %s\n" dep (alist-get :storyid story)))))
+
+      ;; write closing braces
+      (insert "    }\n"))
+    (message (buffer-string))
+    (buffer-string)))
+
+(defun org-dblock-write:block-sprint-progress (_params)
+  "Write the sprint progress graph."
+  (let ((loadp (not org-scrum-data))
+        (params '((:cmdline . "-Tsvg")
+                  (:file . "progress.svg"))))
+    (when loadp
+      (org-scrum--load-all))
+
+    (org-babel-execute:dot
+     (org-scrum--make-dot-config)
+     params)
+
+    (when loadp
+      (setq org-scrum-data nil)))
+  (insert "[[./progress.svg]]")         ; using an org link instead of embedding the image
+  (org-display-inline-images))
+
 ;; planning table
 
 (defun org-scrum--set-completed ()
@@ -739,6 +814,7 @@ system.  The result is the file \"scrum_cards.pdf\"."
       (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-summary") "block-update-summary")
       (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-board") "block-update-board")
       (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-update-burndown") "block-update-burndown")
+      (funcall update-block (rx line-start "#+BEGIN:" (* space) "block-sprint-progress") "block-sprint-progress")
       (when skipped
         (message "Skippped blocks that were not found: %s" (string-join (nreverse skipped) ", ")))))
   (setq org-scrum-data nil))

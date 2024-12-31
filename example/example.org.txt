@@ -26,8 +26,8 @@ These tables are generated. Edits will be lost.
 #+BEGIN: block-update-summary
 | NAME  | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |-------+-----------+--------+------+-----------+--------------+------------|
-| ian   |        13 |      5 |   10 |         3 |   2024-12-30 | ########-- |
-| kevin |         5 |      8 |    5 |         0 |   2024-12-29 | ########## |
+| ian   |        13 |      5 |   10 |         3 |   2025-01-01 | ########-- |
+| kevin |         5 |      8 |    5 |         0 |   2024-12-31 | ########## |
 | wil   |         1 |      0 |    0 |         1 |  no capacity | ---------- |
 #+END:
 ** BURNDOWN CHART
@@ -39,9 +39,9 @@ These tables are generated. Edits will be lost.
 :
 :                                                Burndown
 :     20 +---------------------------------------------------------------------------------------+
-:        |........**************************            +             +            +             |
-:     18 |-+      ....                      *                                     actual *******-|
-:        |            ..                    *                                      ideal ....... |
+:        |**********************************            +             +            +             |
+:     18 |-+      ....                      *                                      ideal .......-|
+:        |            ..                    *                                     actual ******* |
 :        |              ..                   *                                                   |
 :     16 |-+              ..                 *                                                 +-|
 :        |                  ...               *                                                  |
@@ -50,13 +50,13 @@ These tables are generated. Edits will be lost.
 :     12 |-+                          ....      *                                              +-|
 :        |                                ...   *                                                |
 :     10 |-+                                 ....*                                             +-|
-:        |                                       ................                                |
-:        |                                        ***************....**                          |
-:      8 |-+                                                         ...*                      +-|
-:        |                                                              ....                     |
+:        |                                       *...............                                |
+:        |                                        *********************                          |
+:      8 |-+                                                         ..**                      +-|
+:        |                                                              .*..                     |
 :      6 |-+                                                              * ..                 +-|
 :        |                                                                 ** ..                 |
-:      4 |-+                                                                 ***..***************|
+:      4 |-+                                                                 ********************|
 :        |                                                                        ...            |
 :        |                                                                           ....        |
 :      2 |-+                                                                             ...   +-|
@@ -78,6 +78,10 @@ These tables are generated. Edits will be lost.
 | create burndown chart    | T09     | ian   | C        | DONE    |        10 |      4 |      3 | T08  |        1 |
 | add license to src files | T11     | wil   | C        | TODO    |         1 |        |      3 | T03  |        2 |
 | write doc                | T12     | ian   | C        | STARTED |         3 |      1 |      3 | T05  |        2 |
+#+END:
+** SPRINT PROGRESS
+#+BEGIN: block-sprint-progress
+[[./progress.svg]]
 #+END:
 ** SPRINT PLANNING
 :PROPERTIES:
@@ -108,8 +112,6 @@ These tables are generated. Edits will be lost.
 |--------+------------+------------+------------+------------+------------+------------|
 | total  |         14 |         13 |         10 |         14 |       10.5 |         10 |
 #+TBLFM: @1$2=1::@1$3..@1$>=$-1+1::@>$<<..@>$>=vsum(@3..@>>)::@2$3..@2$>='(if(string= $0 "")(format-time-string "%Y-%m-%d" (org-scrum--increment-date(date-to-time $-1)$sprintlength))$0)
-
-
 * STORIES                                                          :noexport:
   :PROPERTIES:
   :ID:       STORIES
@@ -136,6 +138,7 @@ These tables are generated. Edits will be lost.
     :STORYID:   T02
     :SWIMLANE: 1
     :SPRINT:   1
+    :DEPS:     T01
      :END:
     read the [[http://orgmode.org/org.html][org mode reference]]
 *** DONE spike on org table spreadsheets
@@ -145,6 +148,8 @@ These tables are generated. Edits will be lost.
     :SPRINT:   1
     :ESTIMATED: 3
     :OWNER:    ian
+    :SWIMLANE:
+    :DEPS:     T02
     :END:
 ** ENVIRONMENT
 *** DONE [#A] set up project folder [3/3]
@@ -154,7 +159,7 @@ These tables are generated. Edits will be lost.
     :ACTUAL:   1
     :OWNER:    kevin
     :STORYID:   T03
-    :SWIMLANE: 1
+    :SWIMLANE: 2
     :SPRINT:   1
     :END:
     - [X] init git repo
@@ -166,7 +171,7 @@ These tables are generated. Edits will be lost.
     :ACTUAL:   3
     :OWNER:    wil
     :STORYID:   T04
-    :DEPS:     T02
+    :DEPS:     T05
     :SWIMLANE: 1
     :SPRINT:   1
     :END:
@@ -179,7 +184,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    wil
     :STORYID:   T05
     :SWIMLANE: 2
-    :DEPS:     T02
+    :DEPS:     T02 T03
     :SPRINT:   1
     :END:
     list the info each report should contain.  base reports on what

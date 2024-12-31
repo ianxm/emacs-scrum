@@ -26,8 +26,8 @@ These tables are generated. Edits will be lost.
 #+BEGIN: block-update-summary
 | NAME     | ESTIMATED | ACTUAL | DONE | REMAINING | PENCILS DOWN | PROGRESS   |
 |----------+-----------+--------+------+-----------+--------------+------------|
-| devname1 |         4 |      1 |    0 |         4 |   2024-12-30 | ---------- |
-| devname2 |         4 |      0 |    0 |         4 |   2024-12-31 | ---------- |
+| devname1 |         4 |      1 |    0 |         4 |   2025-01-01 | ---------- |
+| devname2 |         4 |      0 |    0 |         4 |   2025-01-02 | ---------- |
 #+END:
 ** BURNDOWN CHART
 :PROPERTIES:
@@ -39,8 +39,8 @@ These tables are generated. Edits will be lost.
 :                                               Burndown
 :     8 +----------------------------------------------------------------------------------------+
 :       |      + ....        +            +             +             +            +             |
-:       |            ...                                                          actual ******* |
-:     7 |-+             ..                                                         ideal .......-|
+:       |            ...                                                           ideal ....... |
+:     7 |-+             ..                                                        actual *******-|
 :       |                 ..                                                                     |
 :       |                   ...                                                                  |
 :     6 |-+                    ...                                                             +-|
@@ -74,7 +74,11 @@ These tables are generated. Edits will be lost.
 | ITEM           | STORYID | OWNER    | PRIORITY | TODO | ESTIMATED | ACTUAL | SPRINT | DEPS | SWIMLANE |
 |----------------+---------+----------+----------+------+-----------+--------+--------+------+----------|
 | name of story1 | S01     | devname1 | A        | TODO |         4 |      1 |      1 |      |          |
-| name of story2 | S02     | devname2 | B        | TODO |         4 |        |      1 |      |          |
+| name of story2 | S02     | devname2 | B        | TODO |         4 |        |      1 | S01  |          |
+#+END:
+** SPRINT PROGRESS
+#+BEGIN: block-sprint-progress
+[[./progress.svg]]
 #+END:
 ** SPRINT PLANNING
 :PROPERTIES:
@@ -128,6 +132,7 @@ These tables are generated. Edits will be lost.
     :OWNER:    devname2
     :STORYID:   S02
     :SPRINT:   1
+    :DEPS:     S01
     :END:
     description of story2
 * BACKLOG                                                          :noexport:
