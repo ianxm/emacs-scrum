@@ -4,7 +4,7 @@
 
 ;; Author: Ian Martins <ianxm@jhu.edu>
 ;; URL: https://github.com/ianxm/emacs-scrum
-;; Version: 0.2.1
+;; Version: 0.2.2
 ;; Package-Requires: ((emacs "24.5") (org "8.2") (seq "2.3") (cl-lib "1.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -33,6 +33,7 @@
 (require 'seq)
 (require 'cl-lib)
 (require 'org)
+(require 'ob-gnuplot)
 
 ;; custom variables
 
@@ -543,76 +544,78 @@ Returns a list of `(date actual ideal)'."
             (org-scrum--compute-actual-burndown cdate sprintlength tot)
             (org-scrum--compute-ideal-burndown cdate sprintlength tot))))
 
-(defun org-scrum--check-gnuplot-exists ()
-  "Check if gnuplot is installed on the system."
-  (unless (eq 0 (call-process-shell-command "gnuplot --version"))
-    (error "Cannot find gnuplot")))
-
 (defun org-scrum--make-gnuplot-config (burndown-data)
-  "Write a gnuplot config to the current buffer.
+  "Return a gnuplot config as a string.
 The config includes inline data taken from BURNDOWN-DATA."
-  (cond (org-scrum-ascii-graph
-         (insert (format "set term dumb size %d, %d\n\n" (car org-scrum-ascii-size) (cdr org-scrum-ascii-size)))
-         (insert "set style line 1 lt 1 lw 1\n")
-         (insert "set style line 2 lt 2 lw 1\n"))
-        (t
-         (insert (format "set term svg size %d, %d background \"white\"\n\n"
-                         (car org-scrum-image-size)
-                         (cdr org-scrum-image-size)))
-         (insert (format "set output \"burndown.svg\"\n"))
-         (insert "set style line 1 lt -1 lw 2 lc \"#399320\"\n")
-         (insert "set style line 2 lt 0 lw 1\n")))
-  (insert "set title \"Burndown\"\n")
-  (insert "set xlabel \"day of sprint\"\n")
-  (insert "set ylabel \"points\"\n")
-  (insert (format "set xrange [1:%d]\n" (length burndown-data)))
-  (insert "plot \"-\" using 1:2 with lines ls 1 title \"actual\", \"\" using 1:3 with lines ls 2 title \"ideal\"\n")
+  (with-temp-buffer
+    (cond (org-scrum-ascii-graph
+           (insert (format "set term dumb size %d, %d\n\n" (car org-scrum-ascii-size) (cdr org-scrum-ascii-size)))
+           (insert "set style line 1 lt 1 lw 1\n")
+           (insert "set style line 2 lt 2 lw 1\n"))
+          (t
+           (insert (format "set term svg size %d, %d background \"white\"\n\n"
+                           (car org-scrum-image-size)
+                           (cdr org-scrum-image-size)))
+           (insert (format "set output \"burndown.svg\"\n"))
+           (insert "set style line 1 lt -1 lw 2 lc \"#399320\"\n")
+           (insert "set style line 2 lt 0 lw 1\n")))
+    (insert "set title \"Burndown\"\n")
+    (insert "set xlabel \"day of sprint\"\n")
+    (insert "set ylabel \"points\"\n")
+    (insert (format "set xrange [1:%d]\n" (length burndown-data)))
+    (insert "plot \"-\" using 1:3 with lines ls 2 title \"ideal\", \"\" using 1:2 with lines ls 1 title \"actual\"\n")
 
-  (insert (mapconcat (lambda (row) (apply #'format (cons "%d %s %s" row)))
-                     burndown-data
-                     "\n"))
-  (insert "\ne\n")
-  ;; gnuplot makes you include the data twice if you want to plot two lines and provide the data inline
-  (insert (mapconcat (lambda (row) (apply #'format (cons "%d %s %s" row)))
-                     burndown-data
-                     "\n"))
-  (insert "\ne\n"))
+    (insert (mapconcat (lambda (row) (apply #'format (cons "%d %s %s" row)))
+                       burndown-data
+                       "\n"))
+    (insert "\ne\n")
+    ;; gnuplot makes you include the data twice if you want to plot two lines and provide the data inline
+    (insert (mapconcat (lambda (row) (apply #'format (cons "%d %s %s" row)))
+                       burndown-data
+                       "\n"))
+    (insert "\ne\n")
+    (buffer-string)))
 
 (defun org-dblock-write:block-update-burndown (_params)
   "Generate burndown chart."
-
-  (org-scrum--check-gnuplot-exists)
 
   (goto-char (point-min))
   (re-search-forward (rx line-start "#+BEGIN:" (* space) "block-update-burndown"))
   (forward-line)                                        ; move into dynamic block
 
   (let ((loadp (not org-scrum-data))
-        (buffer (current-buffer))
         (pt (point))
         burndown-data)
     (when loadp
       (org-scrum--load-all))
     (setq burndown-data (org-scrum--compute-burndown))
-    (with-temp-buffer
-      (org-scrum--make-gnuplot-config burndown-data)
-      (call-process-region (point-min) (point-max) "gnuplot" nil buffer)
-      (set-buffer buffer)
-      (if (not org-scrum-ascii-graph)
-          (progn
-            (insert "[[./burndown.svg]]")      ; using an org link instead of embedding the image
-            (org-display-inline-images))       ; so it gets exported correctly
-        (goto-char pt)
-        (while (search-forward "\f" nil t)     ; delete the formfeed in gnuplot output
-          (replace-match ""))
-        (while (not (looking-at "#\\+END"))    ; prefix graph lines so org exports them cleanly
-          (insert ":")
-          (forward-line 1))
-        (save-restriction
-          (narrow-to-region pt (point))
-          (goto-char pt)                       ; the default linestyle with dots also has '+'s at the points
-          (while (search-forward "#" nil t)    ; which make the graph busier, so we use '#' and then swap them
-            (replace-match "\.")))))           ; for dots
+
+    ;; generate the graph
+    (org-babel-execute:gnuplot
+     (org-scrum--make-gnuplot-config burndown-data)
+     `((:results . "replace file")
+       (:exports . "results")
+       (:file . ,(concat "burndown." (if org-scrum-ascii-graph "dumb" "svg")))))
+
+    ;; write to dynamic block
+    (cond
+     (org-scrum-ascii-graph
+      (insert-file-contents "burndown.dumb")
+      (delete-file "burndown.dumb")
+      (goto-char pt)
+      (while (search-forward "\f" nil t)    ; delete the formfeed in gnuplot output
+        (replace-match ""))
+      (while (not (looking-at "#\\+END"))   ; prefix graph lines so org exports them cleanly
+        (insert ":")
+        (forward-line 1))
+      (save-restriction
+        (narrow-to-region pt (point))
+        (goto-char pt)                      ; the default linestyle with dots also has '+'s at the points
+        (while (search-forward "#" nil t)   ; which make the graph busier, so we use '#' and then swap them
+          (replace-match "\."))))           ; for dots
+     (t
+      (insert "[[./burndown.svg]]")         ; using an org link instead of embedding the image
+      (org-display-inline-images)))         ; so it gets exported correctly
     (when loadp
       (setq org-scrum-data nil))))
 
